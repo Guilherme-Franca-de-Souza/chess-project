@@ -17,5 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código da aplicação
 COPY . .
 
+# Copiar o diretório de migrações do Alembic
+COPY alembic alembic
+COPY alembic.ini alembic.ini
+
 # Definir o comando padrão a ser executado quando o container é iniciado
-ENTRYPOINT ["python", "chess_analysis.py"]
+#ENTRYPOINT ["CMD", "sleep infinity"]

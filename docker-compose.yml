@@ -14,6 +14,7 @@ services:
 
   python-app:
     build: ./python-app
+    container_name: chess
     depends_on:
       - db
     environment:
@@ -21,6 +22,7 @@ services:
       DB_USER: root
       DB_PASSWORD: password
       DB_NAME: chess
+    command: tail -F anything
 
 volumes:
   db_data:
