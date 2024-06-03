@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Definir diretório de trabalho
 WORKDIR /app
 
+COPY . /app
+
 # Copiar arquivo de dependências e instalar dependências do Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

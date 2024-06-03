@@ -14,6 +14,8 @@ services:
 
   python-app:
     build: ./python-app
+    volumes:
+      - .:/app
     container_name: chess
     depends_on:
       - db
