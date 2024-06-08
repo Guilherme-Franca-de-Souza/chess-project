@@ -60,7 +60,6 @@ def main():
                 line_str = get_line_str(line) 
                 print(f"Line {i+1}: Score = {score}, Moves = {line_str} ")
         
-            # Atualiza a cada 5 segundos
             time.sleep(1)
     except Exception as e:
         print(f"Engine error: {e} ")
