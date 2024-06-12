@@ -34,7 +34,7 @@ def eval(fen):
     engine.stdin.write('quit\n')
 
 def main():
-    fen = '8/3K3B/4p2P/2p1k1p1/8/p7/8/8 w - - 0 30'
+    fen = '8/3K3B/4p2P/2p1k1p1/8/p7/7q/8 w - - 0 30'
     eval(fen)
 
 if __name__ == '__main__':
