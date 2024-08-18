@@ -5,7 +5,7 @@ import chess.engine
 
 
 def eval(fen):
-    engine = subprocess.Popen("/usr/games/stockfish", stdin=subprocess.PIPE,
+    engine = subprocess.Popen("/usr/local/bin/stockfish-11/stockfish_20011801_x64", stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
                             universal_newlines=True, bufsize=1)
@@ -23,6 +23,7 @@ def eval(fen):
         if 'readyok' in line:
             break
 
+
     engine.stdin.write(f'position fen {fen}\n')
     engine.stdin.write('eval\n')
 
@@ -33,7 +34,7 @@ def eval(fen):
     engine.stdin.write('quit\n')
 
 def main():
-    fen = '8/3K3B/4p2P/2p1k1p1/8/p7/8/8 w - - 0 1'
+    fen = '8/3K3B/4p2P/2p1k1p1/8/p7/8/6q1 w - - 0 1'
     eval(fen)
 
 if __name__ == '__main__':
