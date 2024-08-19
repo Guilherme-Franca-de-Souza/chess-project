@@ -40,8 +40,8 @@ class Partida(Base):
     negras_id = Column(Integer, ForeignKey('jogadores.id'), nullable=False)
     ambiente_id = Column(Integer, ForeignKey('ambientes.id'), nullable=False)
     #RELACIONAMENTOS
-    brancas = relationship("Jogador", foreign_keys=[brancas_id], back_populates="partidas_brancas")
-    negras = relationship("Jogador", foreign_keys=[negras_id], back_populates="partidas_negras")
+    brancas = relationship("Jogador", foreign_keys=[brancas_id], back_populates="partidas")
+    negras = relationship("Jogador", foreign_keys=[negras_id], back_populates="partidas")
     ambiente = relationship("Ambiente", back_populates="partidas")
     posicoes = relationship("Posicao", back_populates="partida")
     #REGRAS
@@ -63,3 +63,17 @@ class Ambiente(Base):
     descricao = Column(String(4096), nullable=False)
     #RELACIONAMENTOS
     partidas = relationship("Partida", back_populates="ambiente")
+
+class Avaliacao(Base):
+    __tablename__ = 'avaliacoes'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    valor = Column(Float, nullable=False)
+    tempo_segundos = Column(String(255), nullable=False)
+    melhor_lance = Column(String(255), nullable=False)
+    ambiente_id = Column(Integer, ForeignKey('ambientes.id'), nullable=False)
+    jogador_id = Column(Integer, ForeignKey('jogadores.id'), nullable=False)
+    posicao_id = Column(Integer, ForeignKey('posicoes.id'), nullable=False)
+    #RELACIONAMENTOS
+    ambiente = relationship("Ambiente", back_populates="avaliacoes")
+    jogador = relationship("Jogador", back_populates="avaliacoes")
+    posicao = relationship("Posicao", back_populates="avaliacoes")
