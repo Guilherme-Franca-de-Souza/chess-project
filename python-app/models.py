@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, JSON
+from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, JSON, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -33,6 +33,7 @@ class Partida(Base):
     __tablename__ = 'partidas'
     id = Column(Integer, primary_key=True, autoincrement=True)
     lances = Column(String(2048), nullable=False)
+    fen_inicial = Column(String(2048), nullable=False)
     descricao = Column(String(2048), nullable=False)
     resultado = Column(String(45), nullable=False)
     brancas_id = Column(Integer, ForeignKey('jogadores.id'), nullable=False)
@@ -43,6 +44,8 @@ class Partida(Base):
     negras = relationship("Jogador", foreign_keys=[negras_id], back_populates="partidas_negras")
     ambiente = relationship("Ambiente", back_populates="partidas")
     posicoes = relationship("Posicao", back_populates="partida")
+    #REGRAS
+    __table_args__ = (UniqueConstraint('brancas_id', 'negras_id', 'fen_inicial', name='_brancas_negras_fen_inicial_uc'),)
 
 class Jogador(Base):
     __tablename__ = 'jogadores'
