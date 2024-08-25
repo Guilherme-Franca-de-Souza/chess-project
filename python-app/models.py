@@ -4,7 +4,44 @@ from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
-
+    # EXEMPLO DE JSON DAS PEÇAS:
+    '''
+    torres_brancas =
+    {
+        {
+            tipo: TORRE
+            valor_bruto: #
+            avaliacao_relativa_brancas: #
+            avaliacao_relativa_pretas: #
+            casa_atual: #
+            lances_legais: {#, #, #, #}
+            lances_captura: {#, #, #, #}
+            lances_promocao: {}
+        }
+    }
+    peoes_brancas = 
+    {
+        {
+        tipo: PEAO
+        valor_bruto: #
+        valor_relativo: #
+        casa_atual: #
+        lances_legais: {#}
+        lances_captura: {#}
+        lances_promocao: {#}
+        },
+        {
+        tipo: PEAO
+        valor_bruto: #
+        valor_relativo: #
+        casa_atual: #
+        lances_legais: {#}
+        lances_captura: {#}
+        lances_promocao: {#}
+        },
+    }
+    '''
+    
 class Posicao(Base):
     __tablename__ = 'posicoes'
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -45,7 +82,7 @@ class Partida(Base):
     negras = relationship("Jogador", foreign_keys=[negras_id], back_populates="partidas")
     ambiente = relationship("Ambiente", back_populates="partidas")
     posicoes = relationship("Posicao", back_populates="partida")
-    cenarios = relationship("Cenario", back_populates="partidas")
+    cenario = relationship("Cenario", back_populates="partidas")
     #REGRAS
     __table_args__ = (UniqueConstraint('brancas_id', 'negras_id', 'fen_inicial', name='_brancas_negras_fen_inicial_uc'),)
 

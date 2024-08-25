@@ -1,0 +1,31 @@
+Faz um seed dos players
+Faz um seed dos cenários
+Faz um seed do ambiente
+
+Para cada par de players {
+    Inicia engine player 1
+    Inicia engine player 2
+    Para cada cenário {
+        Verifica se não já existe uma partida com os mesmos players para o cenário
+        Realiza a primeira partida com os players no cenário
+        Realiza a segunda partida com os players no cenário
+        Para cada pgn gerado {
+            Preenche os dados da tabela partida
+            Para cada lance no pgn {
+                Cria o registro da posição
+                Cria um registro de avaliação cada posição da sequência, por cada player envolvido
+            }
+        }
+    }
+}
+
+
+#Ao criar o registro da posição{
+
+}
+
+#Ao criar o registro da avaliação{
+    Para cada jogador {
+        avalia e guarda os valores dos campos
+    } 
+}
