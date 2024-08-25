@@ -34,7 +34,6 @@ class Partida(Base):
     __tablename__ = 'partidas'
     id = Column(Integer, primary_key=True, autoincrement=True)
     lances = Column(String(2048), nullable=False)
-    descricao = Column(String(2048), nullable=False)
     resultado = Column(String(45), nullable=False)
     brancas_id = Column(Integer, ForeignKey('jogadores.id'), nullable=False)
     negras_id = Column(Integer, ForeignKey('jogadores.id'), nullable=False)

@@ -73,7 +73,16 @@ def play_game(jogador_brancas, jogador_negras, cenario):
 
     engineBrancas.quit()
     engineNegras.quit()
-    return game
+
+    informacoes_jogo = {
+        "game": game,                                  # O objeto do jogo para gerar o pgn
+        "lances": [move for move in board.move_stack], # Todos os lances realizados
+        "resultado": game.headers["Result"],           # Resultado do jogo (1-0, 0-1, 1/2-1/2)
+        "brancas_id": brancas['dados'].id,             # ID do jogador das Brancas
+        "negras_id": negras['dados'].id,               # ID do jogador das Negras
+        "cenario_id": cenario.id                       # ID do cenário do jogo
+    }
+    return jogo_info
 
 def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
     session = create_connection()
@@ -90,54 +99,38 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
     #Para cada cenário, vamos realizar os pares de partidas entre os jogadores iniciados
     cenarios = session.query(Cenario).all()
     for cenario in cenarios:
-        game1 = play_game(jogadorComRedesNeurais, jogadorSemRedesNeurais) 
-        game2 = play_game(jogadorSemRedesNeurais, jogadorComRedesNeurais)
+        jogo1 = play_game(jogadorComRedesNeurais, jogadorSemRedesNeurais) 
+        jogo2 = play_game(jogadorSemRedesNeurais, jogadorComRedesNeurais)
 
         # Save games to PGN
         nomeGame1 = jogadorComRedesNeurais.nome + ' vs ' + jogadorSemRedesNeurais.nome + '.pgn'
         nomeGame2 = jogadorSemRedesNeurais.nome + ' vs ' + jogadorComRedesNeurais.nome + '.pgn'
         with open(nomeGame1, "w") as f:
-            f.write(str(game1))
+            f.write(str(jogo1['game']))
 
         with open(nomeGame2, "w") as f:
-            f.write(str(game2))
-
-    #classical = chess.engine.SimpleEngine.popen_uci(engine_path)
-    #classical.configure({"Use NNUE": False})
-
-    #nnue = chess.engine.SimpleEngine.popen_uci(engine_path)
-    """    
-    fen = '8/3K3B/4p2P/2p1k1p1/8/p7/8/8 w - - 0 1'
-    board = chess.Board(fen)
-    try:
-        while True:
-            classical_best_lines = get_best_lines(classical, board, depth=3)
-            for i, line_info in enumerate(classical_best_lines):
-                print('\n\n')
-                score = line_info['score'].relative.score(mate_score=10000)
-                #line = line_info['pv']
-                #line_str = get_line_str(line) 
-                print(f"Classical Score = {score}")
-            nnue_best_lines = get_best_lines(nnue, board, depth=3)
-            for i, line_info in enumerate(nnue_best_lines):
-                print('\n\n')
-                score = line_info['score'].relative.score(mate_score=10000)
-                #line = line_info['pv']
-                #line_str = get_line_str(line) 
-                print(f"NNUE Score = {score}")
-            another_best_lines = get_best_lines(another, board, depth=3)
-            for i, line_info in enumerate(another_best_lines):
-                print('\n\n')
-                score = line_info['score'].relative.score(mate_score=10000)
-                #line = line_info['pv']
-                #line_str = get_line_str(line) 
-                print(f"NNUE Score = {score}")
-            
+            f.write(str(jogo2['game']))
         
-            time.sleep(1)
-    except Exception as e:
-        print(f"Engine error: {e} ")
-    """
+        partida1 = Partida()
+        partida1.lances = ','.join(jogo1['lances'])
+        partida1.resultado = jogo1['resultado']
+        partida1.brancas_id = jogo1['brancas_id']
+        partida1.negras_id = jogo1['negras_id']
+        partida1.ambiente_id = 1
+        partida1.cenario_id jogo1['cenario_id']
+
+        partida2 = Partida()
+        partida2.lances = ','.join(jogo2['lances'])
+        partida2.resultado = jogo2['resultado']
+        partida2.brancas_id = jogo2['brancas_id']
+        partida2.negras_id = jogo2['negras_id']
+        partida2.ambiente_id = 1
+        partida2.cenario_id jogo2['cenario_id']
+
+        session.add(partida1)
+        session.add(partida2)
+
+        session.commit()
     
 
 if __name__ == "__main__":
