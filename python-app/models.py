@@ -34,7 +34,6 @@ class Partida(Base):
     __tablename__ = 'partidas'
     id = Column(Integer, primary_key=True, autoincrement=True)
     lances = Column(String(2048), nullable=False)
-    fen_inicial = Column(String(2048), nullable=False)
     descricao = Column(String(2048), nullable=False)
     resultado = Column(String(45), nullable=False)
     brancas_id = Column(Integer, ForeignKey('jogadores.id'), nullable=False)
@@ -48,7 +47,7 @@ class Partida(Base):
     posicoes = relationship("Posicao", back_populates="partida")
     cenario = relationship("Cenario", back_populates="partidas")
     #REGRAS
-    __table_args__ = (UniqueConstraint('brancas_id', 'negras_id', 'fen_inicial', name='_brancas_negras_fen_inicial_uc'),)
+    __table_args__ = (UniqueConstraint('brancas_id', 'negras_id', 'cenario_id', name='_brancas_negras_cenario_uc'),)
 
 class Jogador(Base):
     __tablename__ = 'jogadores'

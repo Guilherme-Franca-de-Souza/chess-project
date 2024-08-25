@@ -30,18 +30,50 @@ def create_connection():
     Session = sessionmaker(bind=engine)
     return Session()
 
+def play_game(jogador_brancas, jogador_negras, cenario):
+    fen = cenario.fen
+    board = chess.Board(fen)
 
-# Aparentemente o stockfish guarda em cache avaliações de uma posição
-# então se eu chamar essa função várias vezes para a mesma posição
-# Ele vai sempre melhorar a análise
-def get_best_lines(engine, board, depth=20, multipv=1):
-    info = engine.analyse(board, chess.engine.Limit(depth=depth), multipv=multipv)
-    return info
+    engineBrancas = chess.engine.SimpleEngine.popen_uci(engine_path) 
+    if (jogador_brancas.redes_neurais == 0) {
+        engineBrancas.configure({"Use NNUE": False})
+    }
 
-# Mostra as linhas de uma forma menos poluida
-def get_line_str(line):
-    line_str = ', '.join([move.uci() for move in line])
-    return line_str
+    engineNegras = chess.engine.SimpleEngine.popen_uci(engine_path) 
+    if (jogador_negras.redes_neurais == 0) {
+        engineBrancas.configure({"Use NNUE": False})
+    }
+
+    brancas = {
+        'engine': engineBrancas
+        'dados': jogador_brancas
+    }
+
+    negras = {
+        'engine': engineNegras
+        'dados': jogador_negras
+    }
+
+    game = chess.pgn.Game()
+    game.headers["White"] = brancas['dados'].nome
+    game.headers["Black"] = negras['dados'].nome
+    
+    node = game
+    while not board.is_game_over():
+        result = brancas['engine'].play(board, chess.engine.Limit(depth=brancas['dados'].profundidade))
+        board.push(result.move)
+        node = node.add_variation(result.move)
+        if board.is_game_over():
+            break
+        result = negras['engine'].play(board, chess.engine.Limit(depth=negras['dados'].profundidade))
+        board.push(result.move)
+        node = node.add_variation(result.move)
+    
+    game.headers["Result"] = board.result()
+
+    engineBrancas.quit()
+    engineNegras.quit()
+    return game
 
 def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
     session = create_connection()
@@ -55,7 +87,20 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
             Jogador.redes_neurais == 0
         )).first()
 
-    print(jogadorComRedesNeurais.nome, jogadorSemRedesNeurais.nome)
+    #Para cada cenário, vamos realizar os pares de partidas entre os jogadores iniciados
+    cenarios = session.query(Cenario).all()
+    for cenario in cenarios:
+        game1 = play_game(jogadorComRedesNeurais, jogadorSemRedesNeurais) 
+        game2 = play_game(jogadorSemRedesNeurais, jogadorComRedesNeurais)
+
+        # Save games to PGN
+        nomeGame1 = jogadorComRedesNeurais.nome + ' vs ' + jogadorSemRedesNeurais.nome + '.pgn'
+        nomeGame2 = jogadorSemRedesNeurais.nome + ' vs ' + jogadorComRedesNeurais.nome + '.pgn'
+        with open(nomeGame1, "w") as f:
+            f.write(str(game1))
+
+        with open(nomeGame2, "w") as f:
+            f.write(str(game2))
 
     #classical = chess.engine.SimpleEngine.popen_uci(engine_path)
     #classical.configure({"Use NNUE": False})
@@ -97,5 +142,3 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
 
 if __name__ == "__main__":
     main(args.profundidadeEngineComRedesNeurais, args.profundidadeEngineSemRedesNeurais)
-    #classical.quit()
-    #nnue.quit()

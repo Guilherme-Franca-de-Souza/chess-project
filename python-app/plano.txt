@@ -1,30 +1,40 @@
-Caso de uso: Da um start, para cada par, varre os cenários e joga as partidas
+@@Caso de uso: 
 
+Da um start, para cada par, varre os cenários e joga as partidas
 
-Faz um seed dos players (X)
-Faz um seed do ambiente (X)
-Faz um seed dos cenários
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-Para cada par de players {
-    Inicia engine player 1
-    Inicia engine player 2
-    Para cada cenário {
-        Verifica se não já existe uma partida com os mesmos players para o cenário
-        Realiza a primeira partida com os players no cenário
-        Realiza a segunda partida com os players no cenário
-        Para cada pgn gerado {
-            Preenche os dados da tabela partida
-            Para cada lance no pgn {
-                Cria o registro da posição
-                Cria um registro de avaliação cada posição da sequência, por cada player envolvido
-            }
+@@Preparação:
+
+Seed dos players (X)
+Seed do ambiente (X)
+Seed dos cenários
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+@Fluxo do código:
+
+Busca profundidade do player 1 (X)
+Busca profundiade do player 2 (X)
+Inicia engine player 1 (X)
+Inicia engine player 2 (X)
+Para cada cenário no banco {
+    Verifica se não já existe uma partida com os mesmos players para o cenário
+    Realiza a primeira partida com os players no cenário e gera pgn
+    Realiza a segunda partida invertendo a cor dos players no cenário e gera pgn
+    Para cada pgn gerado {
+        Preenche os dados da tabela partida
+        Para cada lance no pgn {
+            Gera a posição a partir do lance
+            Cria o registro da posição
+            Cria um registro de avaliação cada posição da sequência, por cada player envolvido
         }
     }
 }
 
 
 #Ao criar o registro da posição{
-
+    Faz o que está no arquivo posicao.py
 }
 
 #Ao criar o registro da avaliação{
