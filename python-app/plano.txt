@@ -20,7 +20,7 @@ Inicia engine player 1 (X)
 Inicia engine player 2 (X)
 Para cada cenário no banco {
     Verifica se não já existe uma partida com os mesmos players para o cenário
-    Realiza a primeira partida com os players no cenário e gera pgn
+    Realiza a primeira partida com os players no cenário e gera pgn (X)
     Realiza a segunda partida invertendo a cor dos players no cenário e gera pgn
     Para cada pgn gerado {
         Preenche os dados da tabela partida

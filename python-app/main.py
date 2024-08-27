@@ -84,6 +84,46 @@ def play_game(jogador_brancas, jogador_negras, cenario):
     }
     return jogo_info
 
+def registra_posicoes_partida(game):
+    node = game
+    while node:
+        board = node.board()  # Recupera o tabuleiro atual
+        pieces_info = informacoes_das_pecas(board)
+        
+        # Exibe ou processa as informações da posição
+        print(f"Informações após o lance {node.move}:")
+        for info in pieces_info:
+            print(info)
+        
+        node = node.next()  # Avança para o próximo lance
+
+def informacoes_das_pecas(board):
+    # Iterar por todas as peças no tabuleiro
+    pieces_info = []
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece:
+            piece_info = {
+                "tipo": piece.piece_type,
+                "cor": "Branca" if piece.color == chess.WHITE else "Preta",
+                "lances_legais": [],
+                "lances_captura": [],
+                "lances_promocao": [],
+                "valor_ajustado": 0
+            }
+
+            # Obter os lances legais para essa peça
+            for move in board.legal_moves:
+                if move.from_square == square:
+                    piece_info["lances_legais"].append(board.san(move))
+                    if board.is_capture(move):
+                        piece_info["lances_captura"].append(board.san(move))
+                    if board.is_into_promotion(move):
+                        piece_info["lances_promocao"].append(board.san(move))
+
+            pieces_info.append(piece_info)
+
+
 def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
     session = create_connection()
     # Busca os jogadores no banco
@@ -101,15 +141,6 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
     for cenario in cenarios:
         jogo1 = play_game(jogadorComRedesNeurais, jogadorSemRedesNeurais) 
         jogo2 = play_game(jogadorSemRedesNeurais, jogadorComRedesNeurais)
-
-        # Save games to PGN
-        nomeGame1 = jogadorComRedesNeurais.nome + ' vs ' + jogadorSemRedesNeurais.nome + '.pgn'
-        nomeGame2 = jogadorSemRedesNeurais.nome + ' vs ' + jogadorComRedesNeurais.nome + '.pgn'
-        with open(nomeGame1, "w") as f:
-            f.write(str(jogo1['game']))
-
-        with open(nomeGame2, "w") as f:
-            f.write(str(jogo2['game']))
         
         partida1 = Partida()
         partida1.lances = ','.join(jogo1['lances'])
@@ -129,6 +160,9 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
 
         session.add(partida1)
         session.add(partida2)
+
+        registra_posicoes_partida(jogo1['game'])
+        registra_posicoes_partida(jogo2['game'])
 
         session.commit()
     
