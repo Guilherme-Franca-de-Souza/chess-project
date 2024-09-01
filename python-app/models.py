@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 Base = declarative_base()
-    
+
 class Posicao(Base):
     __tablename__ = 'posicoes'
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -18,6 +18,8 @@ class Posicao(Base):
     torres_negras = Column(JSON, nullable=False)
     bispos_brancas = Column(JSON, nullable=False)
     bispos_negras = Column(JSON, nullable=False)
+    cavalos_brancas = Column(JSON, nullable=False)
+    cavalos_negras = Column(JSON, nullable=False)
     peoes_brancas = Column(JSON, nullable=False)
     peoes_negras = Column(JSON, nullable=False)
     check = Column(Integer, nullable=False, default=0)
@@ -25,6 +27,7 @@ class Posicao(Base):
     empate_repeticoes = Column(Integer, nullable=False, default=0)
     empate_50 = Column(Integer, nullable=False, default=0)
     empate_afogamento = Column(Integer, nullable=False, default=0)
+    empate_material_insuficiente = Column(Integer, nullable=False, default=0)
     partida_id = Column(Integer, ForeignKey('partidas.id'), nullable=False)
     #RELACIONAMENTOS
     partida = relationship("Partida", back_populates="posicoes")
@@ -106,7 +109,7 @@ class Cenario(Base):
             lances_promocao: {}
         }
     }
-    peoes_brancas = 
+    peoes_brancas =
     {
         {
         tipo: PEAO

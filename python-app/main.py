@@ -1,5 +1,6 @@
 import chess
 import chess.engine
+import chess.pgn
 import random
 import os
 from sqlalchemy import create_engine
@@ -32,32 +33,39 @@ def create_connection():
 
 def play_game(jogador_brancas, jogador_negras, cenario):
     fen = cenario.fen
-    board = chess.Board(fen)
+    board = chess.Board()
 
-    engineBrancas = chess.engine.SimpleEngine.popen_uci(engine_path) 
-    if (jogador_brancas.redes_neurais == 0) {
+    engineBrancas = chess.engine.SimpleEngine.popen_uci(engine_path)
+    if (jogador_brancas.redes_neurais == 0):
+        print('remove nnue das brancas')
+        print(jogador_brancas.id)
         engineBrancas.configure({"Use NNUE": False})
-    }
 
-    engineNegras = chess.engine.SimpleEngine.popen_uci(engine_path) 
-    if (jogador_negras.redes_neurais == 0) {
+    engineNegras = chess.engine.SimpleEngine.popen_uci(engine_path)
+    if (jogador_negras.redes_neurais == 0):
+        print('remove nnue das negras')
+        print(jogador_negras.id)
         engineBrancas.configure({"Use NNUE": False})
-    }
 
     brancas = {
-        'engine': engineBrancas
+        'engine': engineBrancas,
         'dados': jogador_brancas
     }
 
     negras = {
-        'engine': engineNegras
+        'engine': engineNegras,
         'dados': jogador_negras
     }
 
     game = chess.pgn.Game()
     game.headers["White"] = brancas['dados'].nome
     game.headers["Black"] = negras['dados'].nome
-    
+
+    print('profundidade brancas')
+    print(brancas['dados'].profundidade)
+    print('profundidade negras')
+    print(negras['dados'].profundidade)
+
     node = game
     while not board.is_game_over():
         result = brancas['engine'].play(board, chess.engine.Limit(depth=brancas['dados'].profundidade))
@@ -68,7 +76,7 @@ def play_game(jogador_brancas, jogador_negras, cenario):
         result = negras['engine'].play(board, chess.engine.Limit(depth=negras['dados'].profundidade))
         board.push(result.move)
         node = node.add_variation(result.move)
-    
+
     game.headers["Result"] = board.result()
 
     engineBrancas.quit()
@@ -76,52 +84,135 @@ def play_game(jogador_brancas, jogador_negras, cenario):
 
     informacoes_jogo = {
         "game": game,                                  # O objeto do jogo para gerar o pgn
-        "lances": [move for move in board.move_stack], # Todos os lances realizados
+        "lances": [move.uci() for move in board.move_stack], # Todos os lances realizados
         "resultado": game.headers["Result"],           # Resultado do jogo (1-0, 0-1, 1/2-1/2)
         "brancas_id": brancas['dados'].id,             # ID do jogador das Brancas
         "negras_id": negras['dados'].id,               # ID do jogador das Negras
         "cenario_id": cenario.id                       # ID do cenário do jogo
     }
-    return jogo_info
+    return informacoes_jogo
 
-def registra_posicoes_partida(game):
+def registra_posicoes_partida(game, partidaId, session):
     node = game
+    sequencia = 1
     while node:
         board = node.board()  # Recupera o tabuleiro atual
-        pieces_info = informacoes_das_pecas(board)
-        
-        # Exibe ou processa as informações da posição
-        print(f"Informações após o lance {node.move}:")
-        for info in pieces_info:
-            print(info)
-        
+
+        informacoes_pecas = informacoes_das_pecas(board)
+
+        posicao = Posicao()
+        posicao.fen = board.fen()
+        posicao.rei_brancas = informacoes_pecas['rei_brancas']
+        posicao.rei_negras = informacoes_pecas['rei_negras']
+        posicao.dama_brancas = informacoes_pecas['dama_brancas']
+        posicao.dama_negras = informacoes_pecas['dama_negras']
+        posicao.torres_brancas = informacoes_pecas['torres_brancas']
+        posicao.torres_negras = informacoes_pecas['torres_negras']
+        posicao.cavalos_brancas = informacoes_pecas['cavalos_brancas']
+        posicao.cavalos_negras = informacoes_pecas['cavalos_negras']
+        posicao.bispos_brancas = informacoes_pecas['bispos_brancas']
+        posicao.bispos_negras = informacoes_pecas['bispos_negras']
+        posicao.peoes_brancas = informacoes_pecas['peoes_brancas']
+        posicao.peoes_negras = informacoes_pecas['peoes_negras']
+        posicao.check = 1 if board.is_checkmate() else 0
+        posicao.mate = 1 if board.is_check() else 0
+        posicao.empate_material_insuficiente = 1 if board.is_insufficient_material() else 0
+        posicao.empate_repeticoes = 1 if board.is_fivefold_repetition() else 0
+        posicao.empate_50 = 1 if board.is_seventyfive_moves() else 0
+        posicao.empate_afogamento = 1 if board.is_stalemate() else 0
+        session.add(posicao)
+        session.commit()
+
         node = node.next()  # Avança para o próximo lance
+        sequencia+=1
 
 def informacoes_das_pecas(board):
-    # Iterar por todas as peças no tabuleiro
     pieces_info = []
+
+    rei_brancas = []
+    rei_negras = []
+    dama_brancas = []
+    dama_negras = []
+    torres_brancas = []
+    torres_negras = []
+    cavalos_brancas = []
+    cavalos_negras = []
+    bispos_brancas = []
+    bispos_negras = []
+    peoes_brancas = []
+    peoes_negras = []
+
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece:
+
             piece_info = {
                 "tipo": piece.piece_type,
                 "cor": "Branca" if piece.color == chess.WHITE else "Preta",
                 "lances_legais": [],
                 "lances_captura": [],
                 "lances_promocao": [],
-                "valor_ajustado": 0
             }
 
             # Obter os lances legais para essa peça
             for move in board.legal_moves:
                 if move.from_square == square:
-                    piece_info["lances_legais"].append(board.san(move))
+                    san_move = board.san(move)
+                    piece_info["lances_legais"].append(san_move)
                     if board.is_capture(move):
-                        piece_info["lances_captura"].append(board.san(move))
-                    if board.is_into_promotion(move):
-                        piece_info["lances_promocao"].append(board.san(move))
+                        piece_info["lances_captura"].append(san_move)
+                    if move.promotion:
+                        piece_info["lances_promocao"].append(san_move)
 
-            pieces_info.append(piece_info)
+            piece_type = piece.piece_type
+            if piece_type == chess.PAWN:
+                if piece.color == chess.WHITE:
+                    peoes_brancas.append(piece_info)
+                else:
+                    peoes_negras.append(piece_info)
+            elif piece_type == chess.KNIGHT:
+                if piece.color == chess.WHITE:
+                    cavalos_brancas.append(piece_info)
+                else:
+                    cavalos_negras.append(piece_info)
+            elif piece_type == chess.BISHOP:
+                if piece.color == chess.WHITE:
+                    bispos_brancas.append(piece_info)
+                else:
+                    bispos_negras.append(piece_info)
+            elif piece_type == chess.ROOK:
+                if piece.color == chess.WHITE:
+                    torres_brancas.append(piece_info)
+                else:
+                    torres_negras.append(piece_info)
+            elif piece_type == chess.QUEEN:
+                if piece.color == chess.WHITE:
+                    dama_brancas.append(piece_info)
+                else:
+                    dama_negras.append(piece_info)
+            elif piece_type == chess.KING:
+                if piece.color == chess.WHITE:
+                    rei_brancas.append(piece_info)
+                else:
+                    rei_negras.append(piece_info)
+
+    pieces_info = {
+        "rei_brancas": rei_brancas,
+        "rei_negras": rei_negras,
+        "dama_brancas": dama_brancas,
+        "dama_negras": dama_negras,
+        "torres_brancas": torres_brancas,
+        "torres_negras": torres_negras,
+        "cavalos_brancas": cavalos_brancas,
+        "cavalos_negras": cavalos_negras,
+        "bispos_brancas": bispos_brancas,
+        "bispos_negras": bispos_negras,
+        "peoes_brancas": peoes_brancas,
+        "peoes_negras": peoes_negras
+    }
+
+    return pieces_info
+
 
 
 def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
@@ -139,16 +230,16 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
     #Para cada cenário, vamos realizar os pares de partidas entre os jogadores iniciados
     cenarios = session.query(Cenario).all()
     for cenario in cenarios:
-        jogo1 = play_game(jogadorComRedesNeurais, jogadorSemRedesNeurais) 
-        jogo2 = play_game(jogadorSemRedesNeurais, jogadorComRedesNeurais)
-        
+        jogo1 = play_game(jogadorComRedesNeurais, jogadorSemRedesNeurais, cenario)
+        jogo2 = play_game(jogadorSemRedesNeurais, jogadorComRedesNeurais, cenario)
+
         partida1 = Partida()
         partida1.lances = ','.join(jogo1['lances'])
         partida1.resultado = jogo1['resultado']
         partida1.brancas_id = jogo1['brancas_id']
         partida1.negras_id = jogo1['negras_id']
         partida1.ambiente_id = 1
-        partida1.cenario_id jogo1['cenario_id']
+        partida1.cenario_id = jogo1['cenario_id']
 
         partida2 = Partida()
         partida2.lances = ','.join(jogo2['lances'])
@@ -156,16 +247,19 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
         partida2.brancas_id = jogo2['brancas_id']
         partida2.negras_id = jogo2['negras_id']
         partida2.ambiente_id = 1
-        partida2.cenario_id jogo2['cenario_id']
+        partida2.cenario_id = jogo2['cenario_id']
 
-        session.add(partida1)
-        session.add(partida2)
+        print('resultado jogo 1: ' + jogo1['resultado'])
+        print('resultado jogo 2: ' + jogo2['resultado'])
+        #session.add(partida1)
+        #session.add(partida2)
+        #session.commit()
 
-        registra_posicoes_partida(jogo1['game'])
-        registra_posicoes_partida(jogo2['game'])
+        #registra_posicoes_partida(jogo1['game'], partida1.id, session)
+        #registra_posicoes_partida(jogo2['game'], partida2.id, session)
 
-        session.commit()
-    
+
+
 
 if __name__ == "__main__":
     main(args.profundidadeEngineComRedesNeurais, args.profundidadeEngineSemRedesNeurais)
