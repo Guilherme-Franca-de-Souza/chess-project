@@ -83,6 +83,25 @@ def play_game(jogador_brancas, jogador_negras, cenario):
     }
     return informacoes_jogo
 
+def calcular_material(board):
+    valores_das_pecas = {
+        chess.PAWN: 1,
+        chess.KNIGHT: 3,
+        chess.BISHOP: 3,
+        chess.ROOK: 5,
+        chess.QUEEN: 9,
+        chess.KING: 0  # Rei não tem valor material em termos práticos
+    }
+
+    material_brancas = 0
+    material_negras = 0
+
+    for peca in valores_das_pecas:
+        material_brancas += len(board.pieces(peca, chess.WHITE)) * valores_das_pecas[peca]
+        material_negras += len(board.pieces(peca, chess.BLACK)) * valores_das_pecas[peca]
+
+    return material_brancas - material_negras
+
 def registra_posicoes_partida(game, partidaId, session):
     node = game
     sequencia = 1
@@ -95,6 +114,7 @@ def registra_posicoes_partida(game, partidaId, session):
         posicao.partida_id = partidaId
         posicao.fen = board.fen()
         posicao.numero_sequencia = sequencia
+        posicao.diferenca_material = calcular_material(board)
         posicao.rei_brancas = informacoes_pecas['rei_brancas']
         posicao.rei_negras = informacoes_pecas['rei_negras']
         posicao.dama_brancas = informacoes_pecas['dama_brancas']

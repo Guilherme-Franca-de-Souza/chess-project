@@ -10,6 +10,7 @@ class Posicao(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     numero_sequencia = Column(Integer, nullable=False)
     fen = Column(String(4096), nullable=False)
+    diferenca_material = Column(Integer, nullable=False)
     rei_brancas = Column(JSON, nullable=False)
     rei_negras = Column(JSON, nullable=False)
     dama_brancas = Column(JSON, nullable=False)
@@ -91,43 +92,3 @@ class Cenario(Base):
     descricao = Column(String(2048), nullable=False)
     #RELACIONAMENTOS
     partidas = relationship("Partida", back_populates="cenario")
-
-
-
-    # EXEMPLO DE JSON DAS PEÇAS:
-    '''
-    torres_brancas =
-    {
-        {
-            tipo: TORRE
-            valor_bruto: #
-            avaliacao_relativa_brancas: #
-            avaliacao_relativa_pretas: #
-            casa_atual: #
-            lances_legais: {#, #, #, #}
-            lances_captura: {#, #, #, #}
-            lances_promocao: {}
-        }
-    }
-    peoes_brancas =
-    {
-        {
-        tipo: PEAO
-        valor_bruto: #
-        valor_relativo: #
-        casa_atual: #
-        lances_legais: {#}
-        lances_captura: {#}
-        lances_promocao: {#}
-        },
-        {
-        tipo: PEAO
-        valor_bruto: #
-        valor_relativo: #
-        casa_atual: #
-        lances_legais: {#}
-        lances_captura: {#}
-        lances_promocao: {#}
-        },
-    }
-    '''
