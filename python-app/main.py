@@ -37,15 +37,11 @@ def play_game(jogador_brancas, jogador_negras, cenario):
 
     engineBrancas = chess.engine.SimpleEngine.popen_uci(engine_path)
     if (jogador_brancas.redes_neurais == 0):
-        print('remove nnue das brancas')
-        print(jogador_brancas.id)
         engineBrancas.configure({"Use NNUE": False})
 
     engineNegras = chess.engine.SimpleEngine.popen_uci(engine_path)
     if (jogador_negras.redes_neurais == 0):
-        print('remove nnue das negras')
-        print(jogador_negras.id)
-        engineBrancas.configure({"Use NNUE": False})
+        engineNegras.configure({"Use NNUE": False})
 
     brancas = {
         'engine': engineBrancas,
@@ -60,11 +56,6 @@ def play_game(jogador_brancas, jogador_negras, cenario):
     game = chess.pgn.Game()
     game.headers["White"] = brancas['dados'].nome
     game.headers["Black"] = negras['dados'].nome
-
-    print('profundidade brancas')
-    print(brancas['dados'].profundidade)
-    print('profundidade negras')
-    print(negras['dados'].profundidade)
 
     node = game
     while not board.is_game_over():
@@ -101,7 +92,9 @@ def registra_posicoes_partida(game, partidaId, session):
         informacoes_pecas = informacoes_das_pecas(board)
 
         posicao = Posicao()
+        posicao.partida_id = partidaId
         posicao.fen = board.fen()
+        posicao.numero_sequencia = sequencia
         posicao.rei_brancas = informacoes_pecas['rei_brancas']
         posicao.rei_negras = informacoes_pecas['rei_negras']
         posicao.dama_brancas = informacoes_pecas['dama_brancas']
@@ -114,8 +107,8 @@ def registra_posicoes_partida(game, partidaId, session):
         posicao.bispos_negras = informacoes_pecas['bispos_negras']
         posicao.peoes_brancas = informacoes_pecas['peoes_brancas']
         posicao.peoes_negras = informacoes_pecas['peoes_negras']
-        posicao.check = 1 if board.is_checkmate() else 0
-        posicao.mate = 1 if board.is_check() else 0
+        posicao.check = 1 if board.is_check() else 0
+        posicao.mate = 1 if board.is_checkmate() else 0
         posicao.empate_material_insuficiente = 1 if board.is_insufficient_material() else 0
         posicao.empate_repeticoes = 1 if board.is_fivefold_repetition() else 0
         posicao.empate_50 = 1 if board.is_seventyfive_moves() else 0
@@ -249,14 +242,12 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
         partida2.ambiente_id = 1
         partida2.cenario_id = jogo2['cenario_id']
 
-        print('resultado jogo 1: ' + jogo1['resultado'])
-        print('resultado jogo 2: ' + jogo2['resultado'])
-        #session.add(partida1)
-        #session.add(partida2)
-        #session.commit()
+        session.add(partida1)
+        session.add(partida2)
+        session.commit()
 
-        #registra_posicoes_partida(jogo1['game'], partida1.id, session)
-        #registra_posicoes_partida(jogo2['game'], partida2.id, session)
+        registra_posicoes_partida(jogo1['game'], partida1.id, session)
+        registra_posicoes_partida(jogo2['game'], partida2.id, session)
 
 
 
