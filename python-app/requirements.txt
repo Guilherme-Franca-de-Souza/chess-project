@@ -2,3 +2,4 @@ alembic
 python-chess
 mysql-connector-python
 pandas
+tdqm
