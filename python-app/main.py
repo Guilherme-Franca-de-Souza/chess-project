@@ -7,7 +7,6 @@ from sqlalchemy import create_engine
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import sessionmaker
 from models import Base, Posicao, Partida, Jogador, Avaliacao, Cenario, Ambiente
-from eval import eval
 import time
 import argparse
 
@@ -73,12 +72,19 @@ def play_game(jogador_brancas, jogador_negras, cenario):
     engineBrancas.quit()
     engineNegras.quit()
 
+    vencedor_id = None
+    if game.headers["Result"] == "1-0":
+        vencedor_id = brancas['dados'].id
+    elif game.headers["Result"] == "0-1":
+        vencedor_id = negras['dados'].id
+
     informacoes_jogo = {
         "game": game,                                  # O objeto do jogo para gerar o pgn
         "lances": [move.uci() for move in board.move_stack], # Todos os lances realizados
         "resultado": game.headers["Result"],           # Resultado do jogo (1-0, 0-1, 1/2-1/2)
         "brancas_id": brancas['dados'].id,             # ID do jogador das Brancas
         "negras_id": negras['dados'].id,               # ID do jogador das Negras
+        "vencedor_id": vencedor_id,
         "cenario_id": cenario.id                       # ID do cenário do jogo
     }
     return informacoes_jogo
@@ -251,6 +257,7 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
         partida1.resultado = jogo1['resultado']
         partida1.brancas_id = jogo1['brancas_id']
         partida1.negras_id = jogo1['negras_id']
+        partida1.vencedor_id = jogo1['vencedor_id']
         partida1.ambiente_id = 1
         partida1.cenario_id = jogo1['cenario_id']
 
@@ -259,6 +266,7 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
         partida2.resultado = jogo2['resultado']
         partida2.brancas_id = jogo2['brancas_id']
         partida2.negras_id = jogo2['negras_id']
+        partida1.vencedor_id = jogo2['vencedor_id']
         partida2.ambiente_id = 1
         partida2.cenario_id = jogo2['cenario_id']
 
@@ -273,4 +281,9 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
 
 
 if __name__ == "__main__":
-    main(args.profundidadeEngineComRedesNeurais, args.profundidadeEngineSemRedesNeurais)
+    i = 1
+    for com_redes_neurais in range(1, 16):
+        for sem_redes_neurais in range(1, 16):
+            print(i)
+            i+=1
+            main(com_redes_neurais, sem_redes_neurais)
