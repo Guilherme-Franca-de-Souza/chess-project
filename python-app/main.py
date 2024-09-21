@@ -11,10 +11,10 @@ import time
 import argparse
 
 #captura argumentos
-parser = argparse.ArgumentParser(description='Recebe duas variáveis.')
-parser.add_argument('profundidadeEngineComRedesNeurais', type=str, help='Profundidade da engine com redes neurais')
-parser.add_argument('profundidadeEngineSemRedesNeurais', type=str, help='Profundidade da engine sem redes neurais')
-args = parser.parse_args()
+#parser = argparse.ArgumentParser(description='Recebe duas variáveis.')
+#parser.add_argument('profundidadeEngineComRedesNeurais', type=str, help='Profundidade da engine com redes neurais')
+#parser.add_argument('profundidadeEngineSemRedesNeurais', type=str, help='Profundidade da engine sem redes neurais')
+#args = parser.parse_args()
 
 # Define o path da engine
 engine_path = "/usr/games/stockfish"
@@ -59,11 +59,15 @@ def play_game(jogador_brancas, jogador_negras, cenario):
     node = game
     while not board.is_game_over():
         result = brancas['engine'].play(board, chess.engine.Limit(depth=brancas['dados'].profundidade))
+        #Garantir profundidade atingida:
+        #print(result.info)
         board.push(result.move)
         node = node.add_variation(result.move)
         if board.is_game_over():
             break
         result = negras['engine'].play(board, chess.engine.Limit(depth=negras['dados'].profundidade))
+        #Garantir profundidade atingida:
+        #print(result.info)
         board.push(result.move)
         node = node.add_variation(result.move)
 
@@ -266,7 +270,7 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
         partida2.resultado = jogo2['resultado']
         partida2.brancas_id = jogo2['brancas_id']
         partida2.negras_id = jogo2['negras_id']
-        partida1.vencedor_id = jogo2['vencedor_id']
+        partida2.vencedor_id = jogo2['vencedor_id']
         partida2.ambiente_id = 1
         partida2.cenario_id = jogo2['cenario_id']
 
@@ -282,8 +286,8 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
 
 if __name__ == "__main__":
     i = 1
-    for com_redes_neurais in range(1, 16):
-        for sem_redes_neurais in range(1, 16):
+    for com_redes_neurais in range(1, 20):
+        for sem_redes_neurais in range(1, 20):
             print(i)
             i+=1
             main(com_redes_neurais, sem_redes_neurais)
