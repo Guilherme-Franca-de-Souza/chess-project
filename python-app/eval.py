@@ -27,9 +27,15 @@ def eval(fen):
     engine.stdin.write('eval\n')
 
     evaluation = ["Não foi possível"]
+    i = 0
     for eline in iter(engine.stdout.readline, ''):
+        i+=1
+        print(i)
         line = eline.strip()
         print(line)
+        finalEvaluation = re.findall(r"Final evaluation:", line)
+        if (finalEvaluation):
+            break
         #match = re.findall(r"Final evaluation\s+[-+]?\d*\.?\d+", line)
         #if match:
         #    evaluation = re.findall(r"[-+]?\d*\.?\d+", match[0])

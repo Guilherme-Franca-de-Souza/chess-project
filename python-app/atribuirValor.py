@@ -11,15 +11,20 @@ def adicionar_avaliacoes(input_file, output_file):
         next(infile)
         
         # Escreve o header
-        #writer.writerow(["FEN", "avaliação"])
+        writer.writerow(["FEN", "avaliação"])
         
         # Processa linha por linha
+        i = 0
         for row in reader:
+            i += 1
             fen = row[0]
-            print(row[0])
-            print(StockfishEngineEval.eval(row[0]))
-            #avaliacao = calcular_avaliacao(fen)
-            #writer.writerow([fen, avaliacao])
+            avaliacao = StockfishEngineEval.eval(row[0])
+            try:
+                avaliacao = float(avaliacao)
+                writer.writerow([fen, avaliacao])
+                print(i)
+            except ValueError:
+                pass
 
 # Exemplo de uso
 input_file = 'fens/fens-games-01.csv'

@@ -28,13 +28,15 @@ class StockfishEngineEval:
         self.engine.stdin.write(f'position fen {fen}\n')
         self.engine.stdin.write('eval\n')
 
-        evaluation = ["Não foi possível"]
+        evaluation = ["N/A"]
         for eline in iter(self.engine.stdout.readline, ''):
             line = eline.strip()
+            finalEvaluation = re.findall(r"Final evaluation:", line)
             match = re.findall(r"Final evaluation\s+[-+]?\d*\.?\d+", line)
-            print(line)
             if match:
                 evaluation = re.findall(r"[-+]?\d*\.?\d+", match[0])
+                break
+            if finalEvaluation:
                 break
 
         return evaluation[0]
