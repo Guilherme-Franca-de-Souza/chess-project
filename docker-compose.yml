@@ -24,7 +24,8 @@ services:
       DB_USER: root
       DB_PASSWORD: password
       DB_NAME: chess
-    command: tail -F anything
+    ports:
+      - "8888:8888"
 
 volumes:
   db_data:

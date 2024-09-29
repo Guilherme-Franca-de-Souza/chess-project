@@ -33,5 +33,7 @@ COPY . .
 COPY alembic alembic
 COPY alembic.ini alembic.ini
 
+EXPOSE 8888
+
 # Definir o comando padrão a ser executado quando o container é iniciado
-#ENTRYPOINT ["CMD", "sleep infinity"]
+#ENTRYPOINT ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]

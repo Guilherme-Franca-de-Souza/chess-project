@@ -3,4 +3,5 @@ python-chess
 mysql-connector-python
 pandas
 tqdm
+notebook
 torch

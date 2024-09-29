@@ -16,21 +16,116 @@ from auxiliary_func import create_input_for_nn
 
 import pandas as pd
 
+import h5py
+import torch
+
+#pega o array de avaliações e transforma em tensors
+# X transforma naquela matriz, e y os resultados
+# tem 120 milhões de avaliações
+# pega apenas 24 partes de 100 mil
+# ou seja 2.400.000, dois milhões e 400 mil
+
+'''
 csv_file = '../avaliacoes-01.csv'
-games = pd.read_csv(csv_file, skiprows=9, nrows=2500000)
 
-# games vai ser o csv (data frame??) com fens e avaliações
-X, y = create_input_for_nn(games)
+for i in range(0, 24):
+    skip = ((i * 100000)+2)
+    avaliacoes = pd.read_csv(csv_file, skiprows=skip, nrows=100000)
 
-X = X[0:2500000]
-y = y[0:2500000]
+    X, y = create_input_for_nn(avaliacoes)
 
-X = torch.tensor(X, dtype=torch.float32)
-y = torch.tensor(y, dtype=torch.float32)
+    X = X[0:100000]
+    y = y[0:100000]
 
-torch.save(X, 'X_tensor.pt')
-torch.save(y, 'y_tensor.pt') 
+    X = torch.tensor(X, dtype=torch.float32)
+    y = torch.tensor(y, dtype=torch.float32)
 
+    torch.save(X, f'X_tensor_{i}.pt')
+    torch.save(y, f'y_tensor_{i}.pt')
+'''
+
+## Concatena os tensors e salva como hdf5
+## altera o dataset para lidar com esse tipo de arquivo
+'''
+# Crie o arquivo HDF5
+with h5py.File('chess_data.h5', 'w') as h5f:
+    # Determine o tamanho total dos seus dados
+    total_size = 0
+    for i in range(0, 24):
+        X_part = torch.load(f'X_tensor_{i}.pt')
+        total_size += len(X_part)
+
+    # Obtenha as dimensões dos dados
+    X_shape = X_part.shape[1:]
+    y_shape = (1,)  # y é um valor escalar para cada amostra
+
+    # Crie datasets HDF5 com as dimensões totais
+    X_h5 = h5f.create_dataset('X', shape=(total_size, *X_shape), dtype='float32')
+    y_h5 = h5f.create_dataset('y', shape=(total_size, *y_shape), dtype='float32')
+
+    # Preencha o arquivo HDF5 com os dados em partes
+    start_idx = 0
+    for i in range(0, 24):
+        X_part = torch.load(f'X_tensor_{i}.pt')
+        y_part = torch.load(f'y_tensor_{i}.pt')
+        end_idx = start_idx + len(X_part)
+
+        X_h5[start_idx:end_idx] = X_part.numpy()
+        y_h5[start_idx:end_idx] = y_part.numpy().reshape(-1, 1)
+
+        start_idx = end_idx
+'''
+# realiza o treinamento e salva
+from torch.utils.data import DataLoader
+
+from dataset import ChessHDF5Dataset
+from model import ChessModel
+
+# Crie uma instância do dataset
+dataset = ChessHDF5Dataset('chess_data.h5')
+dataloader = DataLoader(dataset, batch_size=64, shuffle=True)
+
+print(torch.cuda.is_available())
+# Treinamento
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(torch.cuda.is_available())
+
+model = ChessModel().to(device)  # Certifique-se de que seu modelo esteja inicializado corretamente
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=0.0001)
+
+num_epochs = 50
+for epoch in range(num_epochs):
+    start_time = time.time()
+    model.train()
+    running_loss = 0.0
+    for inputs, labels in tqdm(dataloader):
+        inputs, labels = inputs.to(device), labels.to(device)
+        
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        
+        loss = criterion(outputs, labels)
+        loss.backward()
+        
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        
+        optimizer.step()
+        running_loss += loss.item()
+    end_time = time.time()
+    epoch_time = end_time - start_time
+    minutes: int = int(epoch_time // 60)
+    seconds: int = int(epoch_time) - minutes * 60
+    print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {running_loss / len(dataloader):.4f}')
+
+torch.save(model.state_dict(), "../../models/TORCH_100EPOCHS.pth")
+
+# Feche o dataset HDF5 ao final do treinamento
+dataset.close()
+
+
+
+'''
 # Preliminary actions
 
 from dataset import ChessDataset
@@ -79,3 +174,4 @@ for epoch in range(num_epochs):
 
 # Save the model
 torch.save(model.state_dict(), "../../models/TORCH_100EPOCHS.pth")
+'''

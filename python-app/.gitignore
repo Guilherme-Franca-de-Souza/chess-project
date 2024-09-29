@@ -1,2 +1,6 @@
 fens
-avaliacoes-01.csv
+
+*.csv
+*.pt
+*.pgn
+*.h5
