@@ -32,7 +32,7 @@ def create_connection():
 
 def play_game(jogador_brancas, jogador_negras, cenario):
     fen = cenario.fen
-    board = chess.Board()
+    board = chess.Board(fen)
 
     engineBrancas = chess.engine.SimpleEngine.popen_uci(engine_path)
     if (jogador_brancas.redes_neurais == 0):
@@ -118,25 +118,25 @@ def registra_posicoes_partida(game, partidaId, session):
     while node:
         board = node.board()  # Recupera o tabuleiro atual
 
-        informacoes_pecas = informacoes_das_pecas(board)
+        #informacoes_pecas = informacoes_das_pecas(board)
 
         posicao = Posicao()
         posicao.partida_id = partidaId
         posicao.fen = board.fen()
         posicao.numero_sequencia = sequencia
         posicao.diferenca_material = calcular_material(board)
-        posicao.rei_brancas = informacoes_pecas['rei_brancas']
-        posicao.rei_negras = informacoes_pecas['rei_negras']
-        posicao.dama_brancas = informacoes_pecas['dama_brancas']
-        posicao.dama_negras = informacoes_pecas['dama_negras']
-        posicao.torres_brancas = informacoes_pecas['torres_brancas']
-        posicao.torres_negras = informacoes_pecas['torres_negras']
-        posicao.cavalos_brancas = informacoes_pecas['cavalos_brancas']
-        posicao.cavalos_negras = informacoes_pecas['cavalos_negras']
-        posicao.bispos_brancas = informacoes_pecas['bispos_brancas']
-        posicao.bispos_negras = informacoes_pecas['bispos_negras']
-        posicao.peoes_brancas = informacoes_pecas['peoes_brancas']
-        posicao.peoes_negras = informacoes_pecas['peoes_negras']
+        posicao.rei_brancas = []
+        posicao.rei_negras = []
+        posicao.dama_brancas = []
+        posicao.dama_negras = []
+        posicao.torres_brancas = []
+        posicao.torres_negras = []
+        posicao.cavalos_brancas = []
+        posicao.cavalos_negras = []
+        posicao.bispos_brancas = []
+        posicao.bispos_negras = []
+        posicao.peoes_brancas = []
+        posicao.peoes_negras = []
         posicao.check = 1 if board.is_check() else 0
         posicao.mate = 1 if board.is_checkmate() else 0
         posicao.empate_material_insuficiente = 1 if board.is_insufficient_material() else 0
@@ -286,8 +286,19 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
 
 if __name__ == "__main__":
     i = 1
-    for com_redes_neurais in range(1, 20):
-        for sem_redes_neurais in range(1, 20):
-            print(i)
-            i+=1
+    for com_redes_neurais in range(30, 20, -1):
+        for sem_redes_neurais in range(30, 0, -1):
+            start_time = time.time()
             main(com_redes_neurais, sem_redes_neurais)
+            tempo = time.time() - start_time
+            print(i, ' / ', tempo, ' ::: ', com_redes_neurais, ' / ', sem_redes_neurais)
+            i+=1
+    
+    i = 1
+    for sem_redes_neurais in range(30, 20, -1):
+        for com_redes_neurais in range(20, 0, -1):
+            start_time = time.time()
+            main(com_redes_neurais, sem_redes_neurais)
+            tempo = time.time() - start_time
+            print(i, ' / ', tempo, ' ::: ', com_redes_neurais, ' / ', sem_redes_neurais)
+            i+=1

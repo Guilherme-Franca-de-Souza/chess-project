@@ -13,7 +13,7 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 # Criando 20 jogadores com redes_neurais = 0 e profundidade de 1 a 20
-for profundidade in range(1, 21):
+for profundidade in range(1, 31):
     jogador = Jogador()
     jogador.nome = f"Stockfish - P {profundidade} - RN 0"
     jogador.profundidade = profundidade
@@ -21,7 +21,7 @@ for profundidade in range(1, 21):
     session.add(jogador)
 
 # Criando 20 jogadores com redes_neurais = 1 e profundidade de 1 a 20
-for profundidade in range(1, 21):
+for profundidade in range(1, 31):
     jogador = Jogador()
     jogador.nome = f"Stockfish - P {profundidade} - RN 1"
     jogador.profundidade = profundidade
