@@ -1,9 +1,7 @@
 import chess
 import chess.engine
 
-# Substitua isso pela sua função de avaliação estática
 def static_evaluation(board):
-    # Exemplo de função de avaliação estática (substitua pela sua)
     return sum(piece_value(piece) for piece in board.piece_map().values())
 
 def piece_value(piece):
@@ -57,7 +55,6 @@ def find_best_move(board, depth, engine):
     return best_move
 
 def main():
-    # Inicie o Stockfish (substitua o caminho para o executável Stockfish)
     engine = chess.engine.SimpleEngine.popen_uci("path/to/stockfish")
 
     board = chess.Board()
@@ -69,7 +66,6 @@ def main():
             best_move = find_best_move(board, depth, engine)
             print(f"Melhor lance para as brancas: {best_move}")
         else:
-            # As negras também jogam usando o Stockfish
             best_move = engine.play(board, chess.engine.Limit(time=2.0)).move
             print(f"Melhor lance para as negras: {best_move}")
 

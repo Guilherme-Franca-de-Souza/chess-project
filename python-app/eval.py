@@ -46,5 +46,5 @@ def eval(fen):
 
 
 
-fen = 'rnbqkb1r/ppppp2p/8/4nppB/8/4P3/3P4/4K3 b kq - 0 1'
+fen = 'rnbqk1nr/1ppppbp1/8/1B2P1B1/p2PN2p/2N5/1PP2PPP/R2QK2R w KQ - 0 1'
 print(eval(fen))
