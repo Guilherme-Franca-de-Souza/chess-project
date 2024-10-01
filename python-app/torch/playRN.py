@@ -1,51 +1,48 @@
 import chess
 import chess.engine
+import StaticEvaluatorRN
 
-def static_evaluation(board):
-    return sum(piece_value(piece) for piece in board.piece_map().values())
+def minimax(board, depth, alpha, beta, maximizing_player, evaluator):
+    if board.is_checkmate():
+        return 9999999999 if maximizing_player else -9999999999
+    if board.is_stalemate() or board.is_insufficient_material() or board.is_seventyfive_moves() or board.is_fivefold_repetition():
+        return 0  # Empate
 
-def piece_value(piece):
-    values = {
-        chess.PAWN: 1,
-        chess.KNIGHT: 3,
-        chess.BISHOP: 3,
-        chess.ROOK: 5,
-        chess.QUEEN: 9,
-        chess.KING: 0
-    }
-    return values.get(piece.piece_type, 0)
-
-def is_check_or_mate(board):
-    return board.is_check() or board.is_checkmate()
-
-def minimax(board, depth, maximizing_player, engine):
-    if depth == 0 or is_check_or_mate(board):
-        return static_evaluation(board)
+    if depth == 0:
+        return evaluator.evaluate(board)
 
     if maximizing_player:
         max_eval = float('-inf')
         for move in board.legal_moves:
             board.push(move)
-            eval = minimax(board, depth - 1, False, engine)
+            eval = minimax(board, depth - 1, alpha, beta, False, evaluator)
             board.pop()
             max_eval = max(max_eval, eval)
+            alpha = max(alpha, eval)
+            if beta <= alpha:
+                break  # Poda beta
         return max_eval
     else:
         min_eval = float('inf')
         for move in board.legal_moves:
             board.push(move)
-            eval = minimax(board, depth - 1, True, engine)
+            eval = minimax(board, depth - 1, alpha, beta, True, evaluator)
             board.pop()
             min_eval = min(min_eval, eval)
+            beta = min(beta, eval)
+            if beta <= alpha:
+                break  # Poda alfa
         return min_eval
 
-def find_best_move(board, depth, engine):
+def find_best_move(board, depth, evaluator):
     best_move = None
     best_eval = float('-inf')
+    alpha = float('-inf')
+    beta = float('inf')
 
     for move in board.legal_moves:
         board.push(move)
-        current_eval = minimax(board, depth - 1, False, engine)
+        current_eval = minimax(board, depth - 1, alpha, beta, False, evaluator)
         board.pop()
 
         if current_eval > best_eval:
@@ -55,18 +52,19 @@ def find_best_move(board, depth, engine):
     return best_move
 
 def main():
-    engine = chess.engine.SimpleEngine.popen_uci("path/to/stockfish")
+    engine = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
+    evaluator = StaticEvaluatorRN.StaticEvaluatorRN()
 
     board = chess.Board()
-    depth = 5  # Profundidade máxima
+    depth = 2  # Profundidade máxima
 
     while not board.is_game_over():
         print(board)
         if board.turn == chess.WHITE:
-            best_move = find_best_move(board, depth, engine)
+            best_move = find_best_move(board, depth, evaluator)
             print(f"Melhor lance para as brancas: {best_move}")
         else:
-            best_move = engine.play(board, chess.engine.Limit(time=2.0)).move
+            best_move = engine.play(board, chess.engine.Limit(depth=1)).move
             print(f"Melhor lance para as negras: {best_move}")
 
         board.push(best_move)
