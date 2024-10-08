@@ -1,14 +1,17 @@
-import random
 import chess
 import chess.engine
 import StaticEvaluatorRN
 from functools import lru_cache
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 nodes_evaluated = 0
 transposition_table = {}
 
 @lru_cache(maxsize=None)
 def evaluate_board(board_fen):
+    global count
+    count += 1
+    #print(count)
     board = chess.Board(board_fen)
     return evaluator.evaluate(board)
 
@@ -33,7 +36,7 @@ def minimax(board, depth, alpha, beta, maximizing_player):
         return 0  # Empate
 
     if depth == 0:
-        return random.randint(-100, 100)
+        return evaluate_board(board_fen)
 
     legal_moves = list(board.legal_moves)
     # Avalie e ordene os movimentos por uma heurística simples
@@ -41,28 +44,40 @@ def minimax(board, depth, alpha, beta, maximizing_player):
 
     if maximizing_player:
         max_eval = float('-inf')
-        for move in legal_moves:
-            board.push(move)
-            eval = minimax(board, depth - 1, alpha, beta, False)
-            board.pop()
-            max_eval = max(max_eval, eval)
-            alpha = max(alpha, eval)
-            if beta <= alpha:
-                break  # Poda beta
+        with ThreadPoolExecutor() as executor:
+            futures = {
+                executor.submit(evaluate_minimax, board.copy(), move, depth, alpha, beta, False): move
+                for move in legal_moves
+            }
+            for future in as_completed(futures):
+                eval = future.result()
+                max_eval = max(max_eval, eval)
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break  # Poda beta
         transposition_table[board_fen] = max_eval
         return max_eval
     else:
         min_eval = float('inf')
-        for move in legal_moves:
-            board.push(move)
-            eval = minimax(board, depth - 1, alpha, beta, True)
-            board.pop()
-            min_eval = min(min_eval, eval)
-            beta = min(beta, eval)
-            if beta <= alpha:
-                break  # Poda alfa
+        with ThreadPoolExecutor() as executor:
+            futures = {
+                executor.submit(evaluate_minimax, board.copy(), move, depth, alpha, beta, True): move
+                for move in legal_moves
+            }
+            for future in as_completed(futures):
+                eval = future.result()
+                min_eval = min(min_eval, eval)
+                beta = min(beta, eval)
+                if beta <= alpha:
+                    break  # Poda alfa
         transposition_table[board_fen] = min_eval
         return min_eval
+
+def evaluate_minimax(board, move, depth, alpha, beta, maximizing_player):
+    board.push(move)
+    eval = minimax(board, depth - 1, alpha, beta, maximizing_player)
+    board.pop()
+    return eval
 
 def find_best_move(board, depth):
     global nodes_evaluated
@@ -72,17 +87,20 @@ def find_best_move(board, depth):
     beta = float('inf')
 
     legal_moves = list(board.legal_moves)
-    # Avaliar e ordenar os movimentos antes de começar a busca
     legal_moves.sort(key=lambda move: evaluate_move(board, move), reverse=True)
 
-    for move in legal_moves:
-        board.push(move)
-        current_eval = minimax(board, depth - 1, alpha, beta, False)
-        board.pop()
+    with ThreadPoolExecutor() as executor:
+        futures = {
+            executor.submit(evaluate_minimax, board.copy(), move, depth, alpha, beta, False): move
+            for move in legal_moves
+        }
+        for future in as_completed(futures):
+            current_eval = future.result()
+            move = futures[future]
 
-        if current_eval > best_eval:
-            best_eval = current_eval
-            best_move = move
+            if current_eval > best_eval:
+                best_eval = current_eval
+                best_move = move
 
     print(f"Nós avaliados: {nodes_evaluated}")
     nodes_evaluated = 0  # Reset para a próxima busca
@@ -90,11 +108,13 @@ def find_best_move(board, depth):
 
 def main():
     global evaluator
+    global count
+    count = 0
     engine = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
     evaluator = StaticEvaluatorRN.StaticEvaluatorRN()
 
     board = chess.Board()
-    depth = 4  # Aumente a profundidade máxima conforme necessário
+    depth = 3 # Aumente a profundidade máxima conforme necessário
 
     while not board.is_game_over():
         print(board)
@@ -106,6 +126,7 @@ def main():
             print(f"Melhor lance para as negras: {best_move}")
 
         board.push(best_move)
+
 
     print("Jogo terminado!")
     engine.quit()

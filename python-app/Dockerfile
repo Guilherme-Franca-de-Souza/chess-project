@@ -35,5 +35,6 @@ COPY alembic.ini alembic.ini
 
 EXPOSE 8888
 
+CMD ["tail", "-f", "/dev/null"]
 # Definir o comando padrão a ser executado quando o container é iniciado
 #ENTRYPOINT ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
