@@ -11,7 +11,7 @@ class StaticEvaluatorRN:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.device = device
         model = ChessModel().to(device)
-        model.load_state_dict(torch.load("TORCH_100EPOCHS.pth", map_location=device, weights_only=True))
+        model.load_state_dict(torch.load("evaluator.pth", map_location=device, weights_only=True))
         model.eval()
         self.model = model
 

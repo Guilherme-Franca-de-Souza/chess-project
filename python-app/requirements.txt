@@ -3,4 +3,10 @@ Flask
 python-chess
 mysql-connector-python
 pandas
+torch
+torchvision
+matplotlib
+lime
+shap
+innvestigate
 tqdm

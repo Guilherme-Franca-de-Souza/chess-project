@@ -1,5 +1,5 @@
 # Dockerfile for Python App
-FROM python:latest
+FROM python:3.11
 
 # Instalar dependências do sistema
 RUN apt-get update && apt-get install -y --no-install-recommends \

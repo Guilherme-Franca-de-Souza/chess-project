@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const neuralEngines = matchData.engines.filter(engine => engine.redes_neurais === 1);
     const nonNeuralEngines = matchData.engines.filter(engine => engine.redes_neurais === 0);
 
+    console.log(neuralEngines)
+
     // Set up grid template
     matchMatrixDiv.style.gridTemplateColumns = `repeat(${nonNeuralEngines.length}, 100px)`;
 
