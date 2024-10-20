@@ -25,23 +25,34 @@ def smoothgrad(model, input_tensor, stdev_spread=0.15, nsamples=50):
 
 ###  LIME ###
 
-import lime
-from lime import lime_image
+import torch
 import numpy as np
+import lime
+from lime import lime_tabular
+
+def model_predict(X_input, model):
+    with torch.no_grad():
+        model.eval()
+        X_input_tensor = torch.tensor(X_input, dtype=torch.float32)
+        output = model(X_input_tensor)
+    return output.cpu().numpy()
 
 def lime_explain(model, X_input, board_to_matrix):
-    # LIME para dados tabulares
-    explainer = lime.lime_tabular.LimeTabularExplainer(
-        training_data=np.random.random((1000, X_input.shape[-1])),  # Geração de dados de exemplo
-        feature_names=[f"feature_{i}" for i in range(X_input.shape[-1])],  # Nominalmente nomeando as features
-        mode='regression'  # Modo de regressão, já que você está prevendo um valor escalar (avaliação)
+    # Flatten a matriz 13x8x8 para ser compatível com LIME (1D)
+    X_input_flattened = X_input.flatten().cpu().numpy()
+
+    # Ajustar o número de features baseado na entrada achatada
+    explainer = lime_tabular.LimeTabularExplainer(
+        training_data=np.random.random((1000, X_input_flattened.shape[0])),  # Geração de dados de exemplo
+        feature_names=[f"feature_{i}" for i in range(X_input_flattened.shape[0])],  # Nominalmente nomeando as features
+        mode='regression'  # Modo de regressão, já que estamos prevendo um valor escalar
     )
 
     # Explicação para uma única instância
     explanation = explainer.explain_instance(
-        X_input.flatten().cpu().numpy(),  # Convertendo para uma entrada 1D compatível
-        model.predict,  # Função preditora do modelo
-        num_features=10  # Escolha o número de features a serem explicadas
+        X_input_flattened,  # Convertido para uma entrada 1D
+        lambda x: model_predict(x.reshape(-1, 13, 8, 8), model),  # Redimensionar para (N, 13, 8, 8) para N amostras
+        num_features=10  # Número de features a serem explicadas
     )
     
     return explanation
@@ -55,8 +66,9 @@ def lime_explain(model, X_input, board_to_matrix):
 import shap
 
 def shap_explain(model, input_tensor):
-    explainer = shap.DeepExplainer(model, input_tensor)
+    explainer = shap.GradientExplainer(model, input_tensor)
     shap_values = explainer.shap_values(input_tensor)
+    
     return shap_values
 
 

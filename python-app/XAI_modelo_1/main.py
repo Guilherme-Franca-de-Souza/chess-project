@@ -44,10 +44,44 @@ class StaticEvaluatorRN:
 
 
 def save_explanation(explanation, method, move_num):
-    output_path_template = f"explanation_{method}_move_{move_num}_channel_{{}}.png"
+    output_path_template = f"{method}/explanation_move_{move_num}_channel_{{}}.png"
+
+    if method == "lime":
+        # Pegar as contribuições das features (importância das features explicadas)
+        feature_importances = explanation.as_list()  # Lista de pares (feature, weight)
+        
+        # Separar features e pesos
+        features, weights = zip(*feature_importances)
+        
+        # Plotar a importância das features
+        plt.figure(figsize=(10, 6))
+        plt.barh(features, weights)
+        plt.xlabel("Peso")
+        plt.ylabel("Features")
+        plt.title(f"Importância das Features - Jogada {move_num}")
+        plt.savefig(f"explanation_{method}_move_{move_num}.png")
+        plt.close()
+    
+    elif method == "shap":
+        # Supondo que "explanation" tenha a forma (1, 13, 8, 8, 1)
+        explanation_slices = explanation[0, :, :, :, 0]  # Remover dimensões extras
+        
+        # Criar subplots para visualizar várias fatias
+        fig, axes = plt.subplots(4, 4, figsize=(10, 10))
+        
+        for i in range(13):
+            ax = axes[i // 4, i % 4]
+            ax.imshow(explanation_slices[i], cmap='viridis', interpolation='none')
+            ax.set_title(f'Feature {i}')
+        
+        plt.suptitle(f"Importância das Features - Jogada {move_num}")
+        plt.tight_layout()
+        plt.savefig(f"explanation_{method}_move_{move_num}.png")
+        plt.close()
+
 
     # Se a explicação for uma matriz 4D, dividir os canais em imagens separadas
-    if isinstance(explanation, np.ndarray) and explanation.ndim == 4:  # (1, 13, 8, 8)
+    elif isinstance(explanation, np.ndarray) and explanation.ndim == 4:  # (1, 13, 8, 8)
         explanation = explanation.squeeze()  # Remove a dimensão de batch (fica (13, 8, 8))
 
         # Criar uma imagem para cada canal
@@ -109,6 +143,6 @@ def analyze_position_with_model(fen, depth=2, method="smoothgrad"):
 
 # Exemplo de uso
 fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-analyze_position_with_model(fen, depth=20, method="smoothgrad")
+analyze_position_with_model(fen, depth=20, method="shap")
 
 engine.quit()
