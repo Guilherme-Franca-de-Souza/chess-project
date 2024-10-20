@@ -103,7 +103,7 @@ def gradcam(model, input_tensor, target_layer_name="conv2"):
     for i in range(conv_output.shape[1]):
         conv_output[:, i, :, :] *= pooled_gradients[i]
 
-    heatmap = torch.mean(conv_output, dim=1).squeeze().cpu().numpy()
+    heatmap = torch.mean(conv_output, dim=1).squeeze().cpu().detach().numpy()
     heatmap = np.maximum(heatmap, 0)
     heatmap /= np.max(heatmap)
     return heatmap
@@ -115,13 +115,22 @@ def gradcam(model, input_tensor, target_layer_name="conv2"):
 ### LRP ###
 
 import torch
+import matplotlib.pyplot as plt
 
 def lrp(model, input_tensor):
-    output = model(input_tensor)
-    output.backward()
+    # Propagar o gradiente de saída para entrada usando autograd
+    input_tensor.requires_grad_(True)
+    
+    output = model(input_tensor)  # Executar o modelo
+    output.backward(torch.ones_like(output))  # Calcular gradiente
 
-    relevance = input_tensor.grad * input_tensor
-    return relevance.cpu().numpy()
+    relevance = input_tensor.grad * input_tensor  # Calcular relevância
+
+    # Desanexar a relevância do gráfico de gradiente e convertê-la para NumPy
+    relevance = relevance.detach().cpu().numpy()
+
+    return relevance
+
 
 
 ### LRP ###

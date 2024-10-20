@@ -44,6 +44,7 @@ class StaticEvaluatorRN:
 
 
 def save_explanation(explanation, method, move_num):
+    print(explanation)
     output_path_template = f"{method}/explanation_move_{move_num}_channel_{{}}.png"
 
     if method == "lime":
@@ -143,6 +144,6 @@ def analyze_position_with_model(fen, depth=2, method="smoothgrad"):
 
 # Exemplo de uso
 fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-analyze_position_with_model(fen, depth=20, method="shap")
+analyze_position_with_model(fen, depth=20, method="lrp")
 
 engine.quit()
