@@ -3,7 +3,7 @@ import chess.engine
 import torch
 from auxiliary_func import board_to_matrix
 from model import ChessModel
-from explainability import smoothgrad, lime_explain, shap_explain, gradcam, lrp
+from explainability import smoothgrad, lime_explain, deeplift, saliency_map, gradcam, lrp
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -33,12 +33,14 @@ class StaticEvaluatorRN:
             return smoothgrad(self.model, X_input)
         elif method == "lime":
             return lime_explain(self.model, X_input, board_to_matrix)
-        elif method == "shap":
-            return shap_explain(self.model, X_input)
         elif method == "gradcam":
             return gradcam(self.model, X_input)
         elif method == "lrp":
             return lrp(self.model, X_input)
+        elif method == "deeplift":
+            return deeplift(self.model, X_input)
+        elif method == "saliency_map":
+            return saliency_map(self.model, X_input)
         else:
             raise ValueError("Método de explicabilidade não reconhecido.")
 
@@ -144,6 +146,6 @@ def analyze_position_with_model(fen, depth=2, method="smoothgrad"):
 
 # Exemplo de uso
 fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-analyze_position_with_model(fen, depth=20, method="lrp")
+analyze_position_with_model(fen, depth=20, method="deeplift")
 
 engine.quit()
