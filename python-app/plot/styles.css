@@ -16,6 +16,22 @@ h1 {
     display: flex;
 }
 
+.x-axis-label {
+    grid-column: span 21; /* It should span the full width of the grid */
+    text-align: center;
+    margin-top: 10px;
+}
+
+.y-axis-label {
+    transform: rotate(-90deg);
+    transform-origin: left bottom;
+    margin-right: 10px;
+    text-align: center;
+    writing-mode: vertical-rl; /* Ensures the text is written vertically */
+    height: 100%;
+    align-self: center;
+}
+
 .cell {
     display: flex;
     flex-direction: column;
