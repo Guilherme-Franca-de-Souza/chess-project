@@ -123,64 +123,16 @@ def lrp(model, input_tensor):
 ### DeepLIFT ###
 
 import torch
-import numpy as np
-import torch.nn.functional as F
+from captum.attr import DeepLift
 
-def deeplift(model, X_input):
-    # Definir a entrada e a referência (baseline de zeros)
-    X_input.requires_grad_()
-    reference_input = torch.zeros_like(X_input)
-    
-    # Listas para armazenar as ativações e as ativações da referência
-    activations = []
-    reference_activations = []
+def deeplift(model, input_tensor):
+    model.eval()  # Certifique-se de que o modelo está em modo de avaliação
+    deeplift = DeepLift(model)  # Inicializa o objeto DeepLIFT
 
-    # Forward pass: Propagar entrada real e referência no modelo
-    current_input = X_input
-    current_ref_input = reference_input
+    # Gera a atribuição DeepLIFT em relação à entrada de referência (matriz de zeros)
+    attribution = deeplift.attribute(input_tensor, target=0, baselines=torch.zeros_like(input_tensor))
 
-    for layer in model.children():
-        # Ativar a camada com a entrada e a referência
-        activation = layer(current_input)
-        ref_activation = layer(current_ref_input)
-        
-        activations.append(activation)
-        reference_activations.append(ref_activation)
-
-        current_input = activation
-        current_ref_input = ref_activation
-
-    # Lista para armazenar relevâncias
-    relevances = []
-
-    for i in range(len(activations)):
-        delta_activation = activations[i] - reference_activations[i]
-        
-        # Gradientes das ativações em relação à entrada
-        activations[i].retain_grad()
-        activations[i].backward(torch.ones_like(activations[i]), retain_graph=True)
-        gradient = activations[i].grad
-
-        # Relevância para essa camada
-        relevance = delta_activation * gradient
-
-        # Ajustar dimensões se necessário para concatenar
-        if relevance.ndim == 4:
-            # A camada é convolucional, mantém as 4 dimensões
-            relevances.append(relevance)
-        elif relevance.ndim == 2:
-            # A camada é totalmente conectada, expande as dimensões e interpola para ajustar
-            # Expande para 4D (batch_size, saída, 1, 1)
-            relevance = relevance.unsqueeze(-1).unsqueeze(-1)
-            # Interpola para o tamanho da camada convolucional anterior (ex: [batch_size, saída, 8, 8])
-            target_size = relevances[-1].shape[2:]  # Usa o tamanho da última camada convolucional
-            relevance = F.interpolate(relevance, size=target_size, mode='bilinear', align_corners=False)
-            relevances.append(relevance)
-
-    # Concatenar relevâncias ao longo da dimensão dos canais (dimensão 1)
-    deep_lift_contributions = torch.cat(relevances, dim=1)
-
-    return deep_lift_contributions.detach().numpy()
+    return attribution.cpu().detach().numpy()
 
 ### DeepLIFT ###
 

@@ -125,7 +125,7 @@ def get_best_lines(fen, depth=20):
 
     return best_lines
 
-def analyze_position_with_model(fen, depth=2, method="smoothgrad"):
+def analyze_position_with_model(fen, depth=2, method="deeplift"):
     best_lines = get_best_lines(fen, depth)
     board = chess.Board(fen)
 
@@ -139,6 +139,7 @@ def analyze_position_with_model(fen, depth=2, method="smoothgrad"):
             print(f"Jogada {move}: Avaliação {static_evaluation}")
 
             explanation = evaluator.explain(board, method)
+            print(explanation)
             save_explanation(explanation, method, move_num + 1)
 
         # Volta o tabuleiro para a posição inicial após cada linha de jogadas
@@ -146,6 +147,6 @@ def analyze_position_with_model(fen, depth=2, method="smoothgrad"):
 
 # Exemplo de uso
 fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-analyze_position_with_model(fen, depth=20, method="deeplift")
+analyze_position_with_model(fen, depth=20, method="lime")
 
 engine.quit()

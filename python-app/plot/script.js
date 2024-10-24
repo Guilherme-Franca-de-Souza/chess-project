@@ -1,54 +1,50 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const matchMatrixDiv = document.getElementById('match-matrix');
+    const whiteMatchMatrixDiv = document.getElementById('white-match-matrix');
+    const blackMatchMatrixDiv = document.getElementById('black-match-matrix');
 
-    // Fetch match data from the server (requires a PHP endpoint)
+    // Fetch match data from the server
     const matchData = await fetch('http://127.0.0.1:8888/data').then(response => response.json());
 
     // Get all neural network engines and non-neural network engines
     const neuralEngines = matchData.engines.filter(engine => engine.redes_neurais === 1);
     const nonNeuralEngines = matchData.engines.filter(engine => engine.redes_neurais === 0);
 
-    console.log(neuralEngines)
+    // Set up grid templates for both matrices
+    whiteMatchMatrixDiv.style.gridTemplateColumns = `repeat(${nonNeuralEngines.length}, 100px)`;
+    blackMatchMatrixDiv.style.gridTemplateColumns = `repeat(${nonNeuralEngines.length}, 100px)`;
 
-    // Set up grid template
-    matchMatrixDiv.style.gridTemplateColumns = `repeat(${nonNeuralEngines.length}, 100px)`;
-
-    // Loop through each neural engine and create a row for each
+    // Loop through each neural engine to create rows for both matrices
     neuralEngines.forEach(neuralEngine => {
-        const rowDiv = document.createElement('div');
-        rowDiv.classList.add('row');
+        const whiteRowDiv = document.createElement('div');
+        whiteRowDiv.classList.add('row');
+        
+        const blackRowDiv = document.createElement('div');
+        blackRowDiv.classList.add('row');
 
-        // Loop through each non-neural engine to create cells
+        // Loop through each non-neural engine to create cells for both matrices
         nonNeuralEngines.forEach(nonNeuralEngine => {
-            const cellDiv = document.createElement('div');
-            cellDiv.classList.add('cell');
+            // Cell for the white matrix (neural engine as white)
+            const whiteCellDiv = document.createElement('div');
+            whiteCellDiv.classList.add('cell');
+            const whiteMatch = matchData.matches.find(match => 
+                match.brancas_id === neuralEngine.id && match.negras_id === nonNeuralEngine.id);
+            whiteCellDiv.classList.add(getResultClass(whiteMatch, neuralEngine.id, nonNeuralEngine.id));
 
-            // Fetch the results for the two matches between these two engines
-            const matches = matchData.matches.filter(match =>
-                (match.brancas_id === neuralEngine.id && match.negras_id === nonNeuralEngine.id) ||
-                (match.brancas_id === nonNeuralEngine.id && match.negras_id === neuralEngine.id)
-            );
+            // Cell for the black matrix (neural engine as black)
+            const blackCellDiv = document.createElement('div');
+            blackCellDiv.classList.add('cell');
+            const blackMatch = matchData.matches.find(match => 
+                match.negras_id === neuralEngine.id && match.brancas_id === nonNeuralEngine.id);
+            blackCellDiv.classList.add(getResultClass(blackMatch, neuralEngine.id, nonNeuralEngine.id));
 
-            // Create the first cell part for the match where neuralEngine is white
-            const firstPart = document.createElement('div');
-            firstPart.classList.add('cell-part');
-            const firstMatch = matches.find(match => match.brancas_id === neuralEngine.id);
-            firstPart.classList.add(getResultClass(firstMatch, neuralEngine.id, nonNeuralEngine.id));
-
-            // Create the second cell part for the match where neuralEngine is black
-            const secondPart = document.createElement('div');
-            secondPart.classList.add('cell-part');
-            const secondMatch = matches.find(match => match.negras_id === neuralEngine.id);
-            secondPart.classList.add(getResultClass(secondMatch, neuralEngine.id, nonNeuralEngine.id));
-
-            // Append both parts to the cell and the cell to the row
-            cellDiv.appendChild(firstPart);
-            cellDiv.appendChild(secondPart);
-            rowDiv.appendChild(cellDiv);
+            // Append cells to respective rows
+            whiteRowDiv.appendChild(whiteCellDiv);
+            blackRowDiv.appendChild(blackCellDiv);
         });
 
-        // Append the row to the match matrix
-        matchMatrixDiv.appendChild(rowDiv);
+        // Append the rows to the corresponding match matrices
+        whiteMatchMatrixDiv.appendChild(whiteRowDiv);
+        blackMatchMatrixDiv.appendChild(blackRowDiv);
     });
 });
 
