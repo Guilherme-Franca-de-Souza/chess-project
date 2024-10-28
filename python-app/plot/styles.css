@@ -6,13 +6,40 @@ h1 {
     text-align: center;
 }
 
+#all-games {
+    justify-content: space-evenly;
+    display: flex;
+    gap: 300px;
+}
+
+.top-name {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    position: absolute;
+    top: -34px; /* Ajuste a posição do nome em cima */
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.left-name {
+    margin-top: 160px;
+    position: absolute;
+    left: -30px; /* Ajuste a posição do nome à esquerda */
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    transform-origin: left center; /* Para girar a partir do lado esquerdo */
+}
+
 #match-matrix {
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
 .row {
+    width: fit-content;
     display: flex;
 }
 

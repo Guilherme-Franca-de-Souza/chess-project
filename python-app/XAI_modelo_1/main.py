@@ -62,7 +62,7 @@ def save_explanation(explanation, method, move_num):
         plt.xlabel("Peso")
         plt.ylabel("Features")
         plt.title(f"Importância das Features - Jogada {move_num}")
-        plt.savefig(f"explanation_{method}_move_{move_num}.png")
+        plt.savefig(f"{method}/explanation_move_{move_num}.png")
         plt.close()
     
     elif method == "shap":

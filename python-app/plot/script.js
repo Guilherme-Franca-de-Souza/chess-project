@@ -33,11 +33,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Append the label row to the matrix container
         container.appendChild(labelRowDiv);
-
-        // Add a title to indicate which matrix it is
-        const title = document.createElement('h3');
-        title.textContent = `${matrixName}: Neural Engines vs. Non-Neural Engines`;
-        container.prepend(title);
     };
 
     // Add row labels for both matrices
@@ -84,32 +79,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     createRows(blackMatchMatrixDiv, false); // For matches where neural engine is black
 
     // Add axis labels (e.g., classic graph-style labels)
-    const addAxisLabels = () => {
-        // X-axis label: "Profundidade motores sem redes neurais"
-        const xAxisLabelWhite = document.createElement('div');
-        xAxisLabelWhite.classList.add('x-axis-label');
-        xAxisLabelWhite.textContent = 'Profundidade motores sem redes neurais';
-        whiteMatchMatrixDiv.appendChild(xAxisLabelWhite);
-
-        const xAxisLabelBlack = document.createElement('div');
-        xAxisLabelBlack.classList.add('x-axis-label');
-        xAxisLabelBlack.textContent = 'Profundidade motores sem redes neurais';
-        blackMatchMatrixDiv.appendChild(xAxisLabelBlack);
-
-        // Y-axis label: "Profundidade motores com redes neurais" (rotated 90 degrees)
-        const yAxisLabelWhite = document.createElement('div');
-        yAxisLabelWhite.classList.add('y-axis-label');
-        yAxisLabelWhite.textContent = 'Profundidade motores com redes neurais';
-        whiteMatchMatrixDiv.prepend(yAxisLabelWhite);
-
-        const yAxisLabelBlack = document.createElement('div');
-        yAxisLabelBlack.classList.add('y-axis-label');
-        yAxisLabelBlack.textContent = 'Profundidade motores com redes neurais';
-        blackMatchMatrixDiv.prepend(yAxisLabelBlack);
-    };
-
-    // Call the function to add axis labels
-    addAxisLabels();
 });
 
 // Function to determine the result class based on match outcome
