@@ -33,8 +33,9 @@ def create_input_for_nn(positions):
     y = []
     # Iterar sobre cada linha do DataFrame
     for index, row in positions.iterrows():
-        print(f"Linha {index}: Coluna 1 = {row[0]}, Coluna 2 = {row[1]}")
+        # tem que ser coluna 3 pq é a avaliação do stockfish mais recente
+        print(f"Linha {index}: Coluna 1 = {row[0]}, Coluna 3 = {row[2]}")
         board = chess.Board(row[0])
         X.append(board_to_matrix(board))
-        y.append(float(row[1]))
+        y.append(float(row[2]))
     return np.array(X, dtype=np.float32), np.array(y)

@@ -29,7 +29,7 @@ def get_data():
     players = cursor.fetchall()
 
     # Consulta para partidas
-    cursor.execute("SELECT brancas_id, negras_id, vencedor_id FROM partidas")
+    cursor.execute("SELECT id, brancas_id, negras_id, vencedor_id, cenario_id FROM partidas")
     matches = cursor.fetchall()
 
     cursor.close()

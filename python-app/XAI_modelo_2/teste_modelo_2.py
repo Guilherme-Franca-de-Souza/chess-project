@@ -51,7 +51,7 @@ def predict_move(board: Board):
 board = Board()
 
 # Initialize Stockfish engine
-with chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish") as engine:
+with chess.engine.SimpleEngine.popen_uci("/usr/local/bin/stockfish") as engine:
     while not board.is_game_over():
         # Your model plays as white
         best_move = predict_move(board)

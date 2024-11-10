@@ -1,21 +1,29 @@
+
+# Dockerfile for Python App
+#FROM python:3.11
+
+# Instalar dependências do sistema
+#RUN apt-get update && apt-get install -y --no-install-recommends \
+#    build-essential \
+#    stockfish \
+#    && rm -rf /var/lib/apt/lists/*
+
 # Dockerfile for Python App
 FROM python:3.11
 
 # Instalar dependências do sistema
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    stockfish \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
- 
-# Copy Stockfish 11 binaries into the container
-COPY ./stockfish-11/ /usr/local/bin/stockfish-11/
-
-# Ensure the binaries are executable
-RUN chmod +x /usr/local/bin/stockfish-11/stockfish_20011801_x64* 
-
-# Set environment variables if needed
-ENV PATH="/usr/local/bin/stockfish-11:$PATH"
+# Baixar Stockfish 17 e extrair
+RUN wget https://github.com/official-stockfish/Stockfish/archive/refs/tags/sf_17.zip -O stockfish.zip && \
+    unzip stockfish.zip && \
+    cd Stockfish-sf_17/src && \
+    make build ARCH=x86-64-modern && \
+    mv ./stockfish /usr/local/bin/ && \
+    cd ../.. && rm -rf Stockfish-sf_17 stockfish.zip
 
 # Definir diretório de trabalho
 WORKDIR /app

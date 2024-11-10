@@ -4,10 +4,11 @@ import torch
 from auxiliary_func import board_to_matrix
 from model import ChessModel
 
-def load_positions(csv_file, n_positions=10000, skip_rows=3000000):
-    column_names = ['fen', 'evaluation']
-    df = pd.read_csv(csv_file, skiprows=skip_rows, nrows=n_positions, header=None, names=column_names)
-    df['evaluation'] = df['evaluation'].astype(float)
+def load_positions(csv_file):
+    column_names = ['fen', 'avaliacao', 'avaliacao17']
+    df = pd.read_csv(csv_file, header=None, names=column_names, skiprows=1)
+    df['avaliacao'] = df['avaliacao'].astype(float)
+    df['avaliacao17'] = df['avaliacao17'].astype(float)
     return df
 
 def prepare_input(board, device):
@@ -25,9 +26,12 @@ def analyze_evaluations(csv_file, model, device, output_csv):
     df = load_positions(csv_file)
     results = []
 
+    i = 0
     for index, row in df.iterrows():
+        i+=1
+        print(i)
         fen = row['fen']
-        stockfish_evaluation = row['evaluation']
+        stockfish_evaluation = row['avaliacao17']
         
         board = chess.Board(fen)
         model_prediction = evaluate_model(model, board, device)
@@ -44,8 +48,8 @@ def analyze_evaluations(csv_file, model, device, output_csv):
     results_df.to_csv(output_csv, index=False)
 
 if __name__ == "__main__":
-    csv_file = 'avaliacoes-01.csv'
-    output_csv = 'resultados_avaliacoes.csv'
+    csv_file = 'avaliacoes-new.csv'
+    output_csv = 'resultados_avaliacoes-new.csv'
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     model = ChessModel().to(device)

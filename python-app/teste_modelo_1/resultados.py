@@ -21,5 +21,5 @@ def evaluate_model_performance(csv_file):
     print(f"Coeficiente de Correlação (R²): {r2:.4f}")
 
 if __name__ == "__main__":
-    csv_file = 'resultados_avaliacoes.csv' 
+    csv_file = 'resultados_avaliacoes-new.csv' 
     evaluate_model_performance(csv_file)

@@ -112,7 +112,7 @@ def save_explanation(explanation, method, move_num):
 evaluator = StaticEvaluatorRN()
 
 # Inicializa o Stockfish (substitua o caminho pelo local onde o stockfish está instalado)
-engine = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
+engine = chess.engine.SimpleEngine.popen_uci("/usr/local/bin/stockfish")
 
 def get_best_lines(fen, depth=20):
     board = chess.Board(fen)

@@ -25,8 +25,12 @@ import torch
 # pega apenas 24 partes de 100 mil
 # ou seja 2.400.000, dois milhões e 400 mil
 
+
+## PRIMEIRO TRANSFORMA AS AVALIAÇÕES EM TENSORES
+# X = REPRESENTAÇÃO DO TABULEIRO EM MATRIZ
+# Z = AVALIACOES (LABELS) DO STOCKFISH
 '''
-csv_file = '../avaliacoes-01.csv'
+csv_file = '../avaliacoes.csv'
 
 for i in range(0, 24):
     skip = ((i * 100000)+2)
@@ -44,6 +48,7 @@ for i in range(0, 24):
     torch.save(y, f'y_tensor_{i}.pt')
 '''
 
+## DEPOIS
 ## Concatena os tensors e salva como hdf5
 ## altera o dataset para lidar com esse tipo de arquivo
 '''
@@ -118,7 +123,7 @@ for epoch in range(num_epochs):
     seconds: int = int(epoch_time) - minutes * 60
     print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {running_loss / len(dataloader):.4f}')
 
-torch.save(model.state_dict(), "../../models/TORCH_100EPOCHS.pth")
+torch.save(model.state_dict(), "../../models/TORCH17_50EPOCHS.pth")
 
 # Feche o dataset HDF5 ao final do treinamento
 dataset.close()

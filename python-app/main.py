@@ -17,7 +17,7 @@ import argparse
 #args = parser.parse_args()
 
 # Define o path da engine
-engine_path = "/usr/games/stockfish"
+engine_path = "/usr/local/bin/stockfish"
 
 # Conexão com o MySQL via SQLAlchemy
 def create_connection():
@@ -32,6 +32,7 @@ def create_connection():
 
 def play_game(jogador_brancas, jogador_negras, cenario):
     fen = cenario.fen
+    print(fen)
     board = chess.Board(fen)
 
     engineBrancas = chess.engine.SimpleEngine.popen_uci(engine_path)
@@ -263,7 +264,7 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
         partida1.negras_id = jogo1['negras_id']
         partida1.vencedor_id = jogo1['vencedor_id']
         partida1.ambiente_id = 1
-        partida1.cenario_id = jogo1['cenario_id']
+        partida1.cenario_id = cenario.id
 
         partida2 = Partida()
         partida2.lances = ','.join(jogo2['lances'])
@@ -272,33 +273,24 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
         partida2.negras_id = jogo2['negras_id']
         partida2.vencedor_id = jogo2['vencedor_id']
         partida2.ambiente_id = 1
-        partida2.cenario_id = jogo2['cenario_id']
+        partida2.cenario_id = cenario.id
 
         session.add(partida1)
         session.add(partida2)
         session.commit()
 
-        registra_posicoes_partida(jogo1['game'], partida1.id, session)
-        registra_posicoes_partida(jogo2['game'], partida2.id, session)
+        #registra_posicoes_partida(jogo1['game'], partida1.id, session)
+        #registra_posicoes_partida(jogo2['game'], partida2.id, session)
 
 
 
 
 if __name__ == "__main__":
-    i = 1
-    for com_redes_neurais in range(30, 20, -1):
-        for sem_redes_neurais in range(30, 0, -1):
+    i = 0
+    for com_redes_neurais in range(1, 21):
+        for sem_redes_neurais in range(1, 21):
+            i += 1
             start_time = time.time()
             main(com_redes_neurais, sem_redes_neurais)
             tempo = time.time() - start_time
             print(i, ' / ', tempo, ' ::: ', com_redes_neurais, ' / ', sem_redes_neurais)
-            i+=1
-    
-    i = 1
-    for sem_redes_neurais in range(30, 20, -1):
-        for com_redes_neurais in range(20, 0, -1):
-            start_time = time.time()
-            main(com_redes_neurais, sem_redes_neurais)
-            tempo = time.time() - start_time
-            print(i, ' / ', tempo, ' ::: ', com_redes_neurais, ' / ', sem_redes_neurais)
-            i+=1

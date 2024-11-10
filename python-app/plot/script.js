@@ -1,29 +1,36 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const whiteMatchMatrixDiv = document.getElementById('white-match-matrix');
-    const blackMatchMatrixDiv = document.getElementById('black-match-matrix');
+    // Referências aos contêineres das matrizes para cada cenário
+    const whiteMatchMatrixDivs = [
+        document.getElementById('white-match-matrix-1'),
+        document.getElementById('white-match-matrix-2'),
+        document.getElementById('white-match-matrix-3')
+    ];
+    const blackMatchMatrixDivs = [
+        document.getElementById('black-match-matrix-1'),
+        document.getElementById('black-match-matrix-2'),
+        document.getElementById('black-match-matrix-3')
+    ];
 
-    // Fetch match data from the server
+    // Buscar dados de partida do servidor
     const matchData = await fetch('http://127.0.0.1:8888/data').then(response => response.json());
 
-    // Get all neural network engines and non-neural network engines
     const neuralEngines = matchData.engines.filter(engine => engine.redes_neurais === 1);
     const nonNeuralEngines = matchData.engines.filter(engine => engine.redes_neurais === 0);
 
-    // Set up grid templates for both matrices
-    whiteMatchMatrixDiv.style.gridTemplateColumns = `repeat(${nonNeuralEngines.length + 1}, 100px)`; // +1 for depth labels
-    blackMatchMatrixDiv.style.gridTemplateColumns = `repeat(${nonNeuralEngines.length + 1}, 100px)`; // +1 for depth labels
+    // Configuração das colunas em grid para cada cenário
+    whiteMatchMatrixDivs.concat(blackMatchMatrixDivs).forEach(matrixDiv => {
+        matrixDiv.style.gridTemplateColumns = `repeat(${nonNeuralEngines.length + 1}, 100px)`;
+    });
 
-    // Create column labels for the non-neural engines' depths (X-axis)
-    const createColumnLabels = (container, matrixName) => {
+    // Função para criar rótulos de coluna para cada cenário
+    const createColumnLabels = (container) => {
         const labelRowDiv = document.createElement('div');
         labelRowDiv.classList.add('row');
-
-        // Add a corner cell
+        
         const cornerCell = document.createElement('div');
         cornerCell.classList.add('cell');
         labelRowDiv.appendChild(cornerCell);
 
-        // Depth labels for non-neural engines (X-axis)
         nonNeuralEngines.forEach(engine => {
             const labelCell = document.createElement('div');
             labelCell.classList.add('cell');
@@ -31,60 +38,58 @@ document.addEventListener('DOMContentLoaded', async () => {
             labelRowDiv.appendChild(labelCell);
         });
 
-        // Append the label row to the matrix container
         container.appendChild(labelRowDiv);
     };
 
-    // Add row labels for both matrices
-    createColumnLabels(whiteMatchMatrixDiv, "White Pieces");
-    createColumnLabels(blackMatchMatrixDiv, "Black Pieces");
+    // Adicionando rótulos de coluna para todas as matrizes
+    whiteMatchMatrixDivs.forEach(createColumnLabels);
+    blackMatchMatrixDivs.forEach(createColumnLabels);
 
-    // Function to create rows with depth labels for neural engines (Y-axis)
-    const createRows = (matrixDiv, isWhite) => {
+    // Função para criar linhas de acordo com o cenário e a cor das peças
+    const createRowsByScenario = (matrixDiv, isWhite, scenarioId) => {
         neuralEngines.forEach(neuralEngine => {
             const rowDiv = document.createElement('div');
             rowDiv.classList.add('row');
 
-            // Add depth label for neural engine on the Y-axis
             const depthLabel = document.createElement('div');
             depthLabel.classList.add('cell');
             depthLabel.textContent = `${neuralEngine.profundidade}`;
             rowDiv.appendChild(depthLabel);
 
-            // Loop through each non-neural engine to create cells
             nonNeuralEngines.forEach(nonNeuralEngine => {
                 const cellDiv = document.createElement('div');
                 cellDiv.classList.add('cell');
 
-                // Find the match based on the color of the neural engine
-                const match = matchData.matches.find(match => 
-                    isWhite
+                // Encontrar a partida com base na cor e no cenário
+                const match = matchData.matches.find(match =>
+                    match.cenario_id === scenarioId &&
+                    (isWhite
                         ? match.brancas_id === neuralEngine.id && match.negras_id === nonNeuralEngine.id
-                        : match.negras_id === neuralEngine.id && match.brancas_id === nonNeuralEngine.id
+                        : match.negras_id === neuralEngine.id && match.brancas_id === nonNeuralEngine.id)
                 );
 
+                // Adicionar classe de resultado e id da partida dentro da célula
                 cellDiv.classList.add(getResultClass(match, neuralEngine.id, nonNeuralEngine.id));
+                //cellDiv.textContent = match ? `${match.id}` : '---'; // Exibe o ID da partida, ou deixa em branco se não houver partida
 
-                // Append the cell to the row
                 rowDiv.appendChild(cellDiv);
             });
 
-            // Append the row to the matrix
             matrixDiv.appendChild(rowDiv);
         });
     };
 
-    // Create rows for both white and black matrices
-    createRows(whiteMatchMatrixDiv, true);  // For matches where neural engine is white
-    createRows(blackMatchMatrixDiv, false); // For matches where neural engine is black
-
-    // Add axis labels (e.g., classic graph-style labels)
+    // Criando linhas para todas as combinações de cor e cenário
+    [1, 2, 3].forEach((scenarioId, index) => {
+        createRowsByScenario(whiteMatchMatrixDivs[index], true, scenarioId);
+        createRowsByScenario(blackMatchMatrixDivs[index], false, scenarioId);
+    });
 });
 
-// Function to determine the result class based on match outcome
+// Função para determinar a classe de resultado com base no resultado da partida
 function getResultClass(match, neuralEngineId, nonNeuralEngineId) {
     if (!match || !match.vencedor_id) {
-        return 'white'; // Draw
+        return 'white'; // Empate
     }
     return match.vencedor_id === neuralEngineId ? 'yellow' : 'pink';
 }

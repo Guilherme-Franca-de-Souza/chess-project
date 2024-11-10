@@ -6,9 +6,16 @@ h1 {
     text-align: center;
 }
 
+.match-group {
+    justify-content: space-evenly;
+    display: flex;
+    gap: 300px;
+}
+
 #all-games {
     justify-content: space-evenly;
     display: flex;
+    flex-direction: column;
     gap: 300px;
 }
 
