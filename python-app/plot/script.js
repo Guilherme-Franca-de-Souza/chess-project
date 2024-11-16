@@ -1,14 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // Referências aos contêineres das matrizes para cada cenário
     const whiteMatchMatrixDivs = [
-        document.getElementById('white-match-matrix-1'),
-        document.getElementById('white-match-matrix-2'),
-        document.getElementById('white-match-matrix-3')
+        document.getElementById('white-match-matrix')
     ];
     const blackMatchMatrixDivs = [
-        document.getElementById('black-match-matrix-1'),
-        document.getElementById('black-match-matrix-2'),
-        document.getElementById('black-match-matrix-3')
+        document.getElementById('black-match-matrix')
     ];
 
     // Buscar dados de partida do servidor
@@ -16,6 +12,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const neuralEngines = matchData.engines.filter(engine => engine.redes_neurais === 1);
     const nonNeuralEngines = matchData.engines.filter(engine => engine.redes_neurais === 0);
+
+    const scenarioId = 2
 
     // Configuração das colunas em grid para cada cenário
     whiteMatchMatrixDivs.concat(blackMatchMatrixDivs).forEach(matrixDiv => {
@@ -79,11 +77,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // Criando linhas para todas as combinações de cor e cenário
-    [1, 2, 3].forEach((scenarioId, index) => {
-        createRowsByScenario(whiteMatchMatrixDivs[index], true, scenarioId);
-        createRowsByScenario(blackMatchMatrixDivs[index], false, scenarioId);
-    });
+    // Criando linhas para todas as combinações de cor pro cenário
+    createRowsByScenario(whiteMatchMatrixDivs[0], true, scenarioId);
+    createRowsByScenario(blackMatchMatrixDivs[0], false, scenarioId);
 });
 
 // Função para determinar a classe de resultado com base no resultado da partida

@@ -25,7 +25,7 @@ def get_data():
     cursor = connection.cursor(dictionary=True)
 
     # Consulta para jogadores
-    cursor.execute("SELECT id, redes_neurais, profundidade FROM jogadores WHERE profundidade < 21")
+    cursor.execute("SELECT id, redes_neurais, profundidade FROM jogadores WHERE profundidade < 26")
     players = cursor.fetchall()
 
     # Consulta para partidas
