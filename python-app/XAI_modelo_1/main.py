@@ -112,7 +112,7 @@ def save_explanation(explanation, method, move_num):
 evaluator = StaticEvaluatorRN()
 
 # Inicializa o Stockfish (substitua o caminho pelo local onde o stockfish está instalado)
-engine = chess.engine.SimpleEngine.popen_uci("/usr/local/bin/stockfish")
+engine = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
 
 def get_best_lines(fen, depth=20):
     board = chess.Board(fen)
@@ -147,6 +147,11 @@ def analyze_position_with_model(fen, depth=2, method="deeplift"):
 
 # Exemplo de uso
 fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+analyze_position_with_model(fen, depth=20, method="smoothgrad")
 analyze_position_with_model(fen, depth=20, method="lime")
+analyze_position_with_model(fen, depth=20, method="gradcam")
+analyze_position_with_model(fen, depth=20, method="lrp")
+analyze_position_with_model(fen, depth=20, method="deeplift")
+analyze_position_with_model(fen, depth=20, method="saliency_map")
 
 engine.quit()

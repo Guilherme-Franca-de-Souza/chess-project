@@ -3,7 +3,7 @@ import re
 
 class StockfishEngineEval:
     def __init__(self):
-        self.engine = subprocess.Popen("/usr/local/bin/stockfish", stdin=subprocess.PIPE,
+        self.engine = subprocess.Popen("/usr/games/stockfish", stdin=subprocess.PIPE,
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.STDOUT,
                                        universal_newlines=True, bufsize=1)

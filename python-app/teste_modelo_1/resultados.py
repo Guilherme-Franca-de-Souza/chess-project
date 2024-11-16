@@ -21,5 +21,25 @@ def evaluate_model_performance(csv_file):
     print(f"Coeficiente de Correlação (R²): {r2:.4f}")
 
 if __name__ == "__main__":
-    csv_file = 'resultados_avaliacoes-new.csv' 
+    csv_file = 'resultados_avaliacoes-model-17.csv'
+    print('')
+    print('')
+    print('')
+    print('comparações do stockfish 17 com o modelo') 
+    evaluate_model_performance(csv_file)
+
+
+    print('')
+    print('')
+    print('')
+    print('comparações do stockfish 17 com o stockfish 15') 
+    csv_file = 'resultados_avaliacoes-15-17.csv' 
+    evaluate_model_performance(csv_file)
+
+
+    print('')
+    print('')
+    print('')
+    print('comparações do stockfish 17 com o stockfish 16') 
+    csv_file = 'resultados_avaliacoes-16-17.csv' 
     evaluate_model_performance(csv_file)

@@ -3,7 +3,7 @@ import chess.pgn
 import chess.engine
 
 # Define the engine path
-engine_path = "/usr/local/bin/stockfish"
+engine_path = "/usr/games/stockfish"
 
 # Initialize engines
 classical = chess.engine.SimpleEngine.popen_uci(engine_path)

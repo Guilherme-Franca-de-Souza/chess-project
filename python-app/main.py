@@ -4,7 +4,7 @@ import chess.pgn
 import random
 import os
 from sqlalchemy import create_engine
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, exists
 from sqlalchemy.orm import sessionmaker
 from models import Base, Posicao, Partida, Jogador, Avaliacao, Cenario, Ambiente
 import time
@@ -17,7 +17,7 @@ import argparse
 #args = parser.parse_args()
 
 # Define o path da engine
-engine_path = "/usr/local/bin/stockfish"
+engine_path = "/usr/games/stockfish"
 
 # Conexão com o MySQL via SQLAlchemy
 def create_connection():
@@ -32,7 +32,6 @@ def create_connection():
 
 def play_game(jogador_brancas, jogador_negras, cenario):
     fen = cenario.fen
-    print(fen)
     board = chess.Board(fen)
 
     engineBrancas = chess.engine.SimpleEngine.popen_uci(engine_path)
@@ -58,6 +57,10 @@ def play_game(jogador_brancas, jogador_negras, cenario):
     game.headers["Black"] = negras['dados'].nome
 
     node = game
+
+    print(fen)
+    print(brancas['dados'].profundidade)
+    print(negras['dados'].profundidade)
     while not board.is_game_over():
         result = brancas['engine'].play(board, chess.engine.Limit(depth=brancas['dados'].profundidade))
         #Garantir profundidade atingida:
@@ -254,41 +257,61 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
     #Para cada cenário, vamos realizar os pares de partidas entre os jogadores iniciados
     cenarios = session.query(Cenario).all()
     for cenario in cenarios:
-        jogo1 = play_game(jogadorComRedesNeurais, jogadorSemRedesNeurais, cenario)
-        jogo2 = play_game(jogadorSemRedesNeurais, jogadorComRedesNeurais, cenario)
+        if (cenario.id < 3):
+            partidaExistente = session.query(exists().where(
+                    and_(
+                        Partida.brancas_id == jogadorComRedesNeurais.id,
+                        Partida.negras_id == jogadorSemRedesNeurais.id,
+                        Partida.cenario_id == cenario.id
+                    )
+                )
+            ).scalar()
 
-        partida1 = Partida()
-        partida1.lances = ','.join(jogo1['lances'])
-        partida1.resultado = jogo1['resultado']
-        partida1.brancas_id = jogo1['brancas_id']
-        partida1.negras_id = jogo1['negras_id']
-        partida1.vencedor_id = jogo1['vencedor_id']
-        partida1.ambiente_id = 1
-        partida1.cenario_id = cenario.id
+            if (partidaExistente):
+                print('JA EXISTE')
+                continue
+            jogo1 = play_game(jogadorComRedesNeurais, jogadorSemRedesNeurais, cenario)
+            
+            jogo2 = play_game(jogadorSemRedesNeurais, jogadorComRedesNeurais, cenario)
 
-        partida2 = Partida()
-        partida2.lances = ','.join(jogo2['lances'])
-        partida2.resultado = jogo2['resultado']
-        partida2.brancas_id = jogo2['brancas_id']
-        partida2.negras_id = jogo2['negras_id']
-        partida2.vencedor_id = jogo2['vencedor_id']
-        partida2.ambiente_id = 1
-        partida2.cenario_id = cenario.id
+            lances1 = ','.join(jogo1['lances'])
+            lances2 = ','.join(jogo2['lances'])
 
-        session.add(partida1)
-        session.add(partida2)
-        session.commit()
+            lances1 = lances1[:2000]
+            lances2 = lances2[:2000]
 
-        #registra_posicoes_partida(jogo1['game'], partida1.id, session)
-        #registra_posicoes_partida(jogo2['game'], partida2.id, session)
+            partida1 = Partida()
+            partida1.lances = lances1
+            partida1.resultado = jogo1['resultado']
+            partida1.brancas_id = jogo1['brancas_id']
+            partida1.negras_id = jogo1['negras_id']
+            partida1.vencedor_id = jogo1['vencedor_id']
+            partida1.ambiente_id = 1
+            partida1.cenario_id = cenario.id
+
+            partida2 = Partida()
+            partida2.lances = lances2
+            partida2.resultado = jogo2['resultado']
+            partida2.brancas_id = jogo2['brancas_id']
+            partida2.negras_id = jogo2['negras_id']
+            partida2.vencedor_id = jogo2['vencedor_id']
+            partida2.ambiente_id = 1
+            partida2.cenario_id = cenario.id
+
+            session.add(partida1)
+            session.add(partida2)
+            session.commit()
+
+            #registra_posicoes_partida(jogo1['game'], partida1.id, session)
+            #registra_posicoes_partida(jogo2['game'], partida2.id, session)
 
 
 
 
 if __name__ == "__main__":
     i = 0
-    for com_redes_neurais in range(1, 21):
-        for sem_redes_neurais in range(1, 21):
+    for com_redes_neurais in range(1, 26):
+        for sem_redes_neurais in range(1, 26):
             i += 1
             start_time = time.time()
             main(com_redes_neurais, sem_redes_neurais)

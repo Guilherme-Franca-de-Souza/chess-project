@@ -5,7 +5,7 @@ import chess.engine
 
 
 def eval(fen):
-    engine = subprocess.Popen("/usr/local/bin/stockfish", stdin=subprocess.PIPE,
+    engine = subprocess.Popen("/usr/local/bin/sf16/stockfish", stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
                             universal_newlines=True, bufsize=1)
@@ -16,7 +16,7 @@ def eval(fen):
         line = eline.strip()
         if 'uciok' in line:
             break
-
+    
     engine.stdin.write('isready\n')
     for eline in iter(engine.stdout.readline, ''):
         line = eline.strip()
@@ -43,7 +43,7 @@ def eval(fen):
     engine.stdin.write('quit\n')
     #return evaluation[0]
 
+#rkbqnbnr/1ppp1ppp/8/p5N1/3N4/3P1BBR/PP1QPPPP/R3K3 b Q - 0 1
 
-
-fen = 'rnbqkbnr/1ppp1ppp/4p3/p3N3/3PPB2/N6B/PP1QPPPP/R3K2R b KQkq - 0 1'
+fen = 'rbnqk1nr/1ppppbpp/8/1B4B1/p2NP3/2R1N3/1P4PP/3Q1RK1 b - - 0 1'
 print(eval(fen))
