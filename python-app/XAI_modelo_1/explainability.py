@@ -32,6 +32,21 @@ import numpy as np
 import lime
 from lime import lime_tabular
 
+def feature_to_channel_position(index, channels, height, width):
+    """
+    Converte um índice de feature achatado para canal e posição original na matriz 13x8x8.
+    :param index: Índice linear (achado).
+    :param channels: Número de canais (13).
+    :param height: Altura da matriz (8).
+    :param width: Largura da matriz (8).
+    :return: (canal, x, y)
+    """
+    channel = index // (height * width)
+    remaining = index % (height * width)
+    x = remaining // width
+    y = remaining % width
+    return channel, x, y
+
 def model_predict(X_input, model):
     with torch.no_grad():
         model.eval()
@@ -46,7 +61,11 @@ def lime_explain(model, X_input, board_to_matrix):
     # Ajustar o número de features baseado na entrada achatada
     explainer = lime_tabular.LimeTabularExplainer(
         training_data=np.random.random((1000, X_input_flattened.shape[0])),  # Geração de dados de exemplo
-        feature_names=[f"feature_{i}" for i in range(X_input_flattened.shape[0])],  # Nominalmente nomeando as features
+        feature_names=[
+            f"channel_{channel} (x={x}, y={y})"
+            for i in range(X_input_flattened.shape[0])
+            for channel, x, y in [feature_to_channel_position(i, 13, 8, 8)]
+        ],  # Nomes descritivos com canal e posição
         mode='regression'  # Modo de regressão, já que estamos prevendo um valor escalar
     )
 

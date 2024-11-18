@@ -46,7 +46,6 @@ class StaticEvaluatorRN:
 
 
 def save_explanation(explanation, method, move_num):
-    print(explanation)
     output_path_template = f"{method}/explanation_move_{move_num}_channel_{{}}.png"
 
     if method == "lime":
@@ -55,41 +54,26 @@ def save_explanation(explanation, method, move_num):
         
         # Separar features e pesos
         features, weights = zip(*feature_importances)
-        
+        # Garantir que as features têm nomes descritivos
+        features = [f"{feature}" for feature in features]
         # Plotar a importância das features
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(20, 12))
         plt.barh(features, weights)
         plt.xlabel("Peso")
-        plt.ylabel("Features")
+        plt.ylabel("Features (Canal e Posição)")
         plt.title(f"Importância das Features - Jogada {move_num}")
         plt.savefig(f"{method}/explanation_move_{move_num}.png")
         plt.close()
     
-    elif method == "shap":
-        # Supondo que "explanation" tenha a forma (1, 13, 8, 8, 1)
-        explanation_slices = explanation[0, :, :, :, 0]  # Remover dimensões extras
-        
-        # Criar subplots para visualizar várias fatias
-        fig, axes = plt.subplots(4, 4, figsize=(10, 10))
-        
-        for i in range(13):
-            ax = axes[i // 4, i % 4]
-            ax.imshow(explanation_slices[i], cmap='viridis', interpolation='none')
-            ax.set_title(f'Feature {i}')
-        
-        plt.suptitle(f"Importância das Features - Jogada {move_num}")
-        plt.tight_layout()
-        plt.savefig(f"explanation_{method}_move_{move_num}.png")
-        plt.close()
-
-
     # Se a explicação for uma matriz 4D, dividir os canais em imagens separadas
     elif isinstance(explanation, np.ndarray) and explanation.ndim == 4:  # (1, 13, 8, 8)
         explanation = explanation.squeeze()  # Remove a dimensão de batch (fica (13, 8, 8))
 
         # Criar uma imagem para cada canal
         for i in range(explanation.shape[0]):  # Explicação agora tem (13, 8, 8)
-            plt.imshow(explanation[i], cmap='hot', interpolation='nearest')
+            # Inverter o eixo horizontal ou vertical para ajustar à visualização do tabuleiro
+            explanation_channel = np.flip(explanation[i], axis=0)  # Inverter verticalmente (y)
+            plt.imshow(explanation_channel, cmap='hot', interpolation='nearest')
             plt.colorbar()
 
             output_path = output_path_template.format(i + 1)  # Para numerar os canais
@@ -112,46 +96,39 @@ def save_explanation(explanation, method, move_num):
 evaluator = StaticEvaluatorRN()
 
 # Inicializa o Stockfish (substitua o caminho pelo local onde o stockfish está instalado)
-engine = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
+engine = chess.engine.SimpleEngine.popen_uci("/usr/local/bin/sf17/stockfish")
 
-def get_best_lines(fen, depth=20):
-    board = chess.Board(fen)
-    result = engine.analyse(board, chess.engine.Limit(depth=depth), multipv=2)
-
-    best_lines = []
-    for info in result:
-        line_moves = info["pv"]  # "pv" contém a sequência de jogadas (principal variation)
-        best_lines.append(line_moves)
-
-    return best_lines
-
-def analyze_position_with_model(fen, depth=25, method="deeplift"):
-    best_lines = get_best_lines(fen, depth)
+def analyze_position_with_model(fen):
     board = chess.Board(fen)
 
-    for i, line in enumerate(best_lines):
-        print(f"\nLinha {i+1}:")
-        print(f"Avaliação da posição inicial: {evaluator.evaluate(board)}")
+    linha_de_lances = [
+        chess.Move.from_uci('d4d5'),
+        chess.Move.from_uci('c6b5'),
+        chess.Move.from_uci('d5d6'),
+        chess.Move.from_uci('e7c6'),
+        chess.Move.from_uci('e4e5'),
+        chess.Move.from_uci('e8f8'),
+    ]
 
-        for move_num, move in enumerate(line):
-            board.push(move)
-            static_evaluation = evaluator.evaluate(board)
-            print(f"Jogada {move}: Avaliação {static_evaluation}")
-
-            #explanation = evaluator.explain(board, method)
-            #print(explanation)
-            #save_explanation(explanation, method, move_num + 1)
-
-        # Volta o tabuleiro para a posição inicial após cada linha de jogadas
-        board = chess.Board(fen)
+    for i, lance in enumerate(linha_de_lances):
+        #print(f"Avaliação da posição inicial: {evaluator.evaluate(board)}")
+        board.push(lance)
+        static_evaluation = evaluator.evaluate(board)
+        #print(f"Jogada {move}: Avaliação {static_evaluation}")
+        #explanation = evaluator.explain(board, "smoothgrad")
+        #save_explanation(explanation, "smoothgrad", i + 1)
+        explanation = evaluator.explain(board, "lime")
+        save_explanation(explanation, "lime", i + 1)
+        #explanation = evaluator.explain(board, "lrp")
+        #save_explanation(explanation, "lrp", i + 1)
+        #explanation = evaluator.explain(board, "deeplift")
+        #save_explanation(explanation, "deeplift", i + 1)
+        #explanation = evaluator.explain(board, "saliency_map")
+        #save_explanation(explanation, "saliency_map", i + 1)
+        
 
 # Exemplo de uso
 fen = "r1bqk1nr/pp1pnppp/1bp5/1B6/3PP3/5N2/PP3PPP/RNBQ1RK1 w kq - 0 1"
-analyze_position_with_model(fen, depth=20, method="smoothgrad")
-#analyze_position_with_model(fen, depth=20, method="lime")
-#analyze_position_with_model(fen, depth=20, method="gradcam")
-#analyze_position_with_model(fen, depth=20, method="lrp")
-#analyze_position_with_model(fen, depth=20, method="deeplift")
-#analyze_position_with_model(fen, depth=20, method="saliency_map")
+analyze_position_with_model(fen)
 
 engine.quit()

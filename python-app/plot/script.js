@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const neuralEngines = matchData.engines.filter(engine => engine.redes_neurais === 1);
     const nonNeuralEngines = matchData.engines.filter(engine => engine.redes_neurais === 0);
 
-    const scenarioId = 2
+    const scenarioId = 6
 
     // Configuração das colunas em grid para cada cenário
     whiteMatchMatrixDivs.concat(blackMatchMatrixDivs).forEach(matrixDiv => {

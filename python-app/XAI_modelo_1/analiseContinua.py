@@ -46,7 +46,6 @@ class StaticEvaluatorRN:
 
 
 def save_explanation(explanation, method, move_num):
-    print(explanation)
     output_path_template = f"{method}/explanation_move_{move_num}_channel_{{}}.png"
 
     if method == "lime":
@@ -112,46 +111,49 @@ def save_explanation(explanation, method, move_num):
 evaluator = StaticEvaluatorRN()
 
 # Inicializa o Stockfish (substitua o caminho pelo local onde o stockfish está instalado)
-engine = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
+engine = chess.engine.SimpleEngine.popen_uci("/usr/local/bin/sf17/stockfish")
 
-def get_best_lines(fen, depth=20):
+def get_best_lines(time_limit=1.0):
     board = chess.Board(fen)
-    result = engine.analyse(board, chess.engine.Limit(depth=depth), multipv=2)
+    # Limitar pelo tempo em segundos
+    result = engine.analyse(board, chess.engine.Limit(time=time_limit), multipv=2)
 
     best_lines = []
     for info in result:
         line_moves = info["pv"]  # "pv" contém a sequência de jogadas (principal variation)
         best_lines.append(line_moves)
-
     return best_lines
 
-def analyze_position_with_model(fen, depth=25, method="deeplift"):
-    best_lines = get_best_lines(fen, depth)
+def analyze_position_with_model(fen, time_limit=1.0):
+    best_lines = get_best_lines(time_limit)
     board = chess.Board(fen)
 
     for i, line in enumerate(best_lines):
         print(f"\nLinha {i+1}:")
-        print(f"Avaliação da posição inicial: {evaluator.evaluate(board)}")
-
+        #print(f"Avaliação da posição inicial: {evaluator.evaluate(board)}")
         for move_num, move in enumerate(line):
             board.push(move)
             static_evaluation = evaluator.evaluate(board)
-            print(f"Jogada {move}: Avaliação {static_evaluation}")
-
-            #explanation = evaluator.explain(board, method)
-            #print(explanation)
-            #save_explanation(explanation, method, move_num + 1)
+            #print(f"Jogada {move}: Avaliação {static_evaluation}")
+            explanation = evaluator.explain(board, "smoothgrad")
+            save_explanation(explanation, "smoothgrad", move_num + 1)
+            explanation = evaluator.explain(board, "lime")
+            save_explanation(explanation, "lime", move_num + 1)
+            #explanation = evaluator.explain(board, "gradcam")
+            #save_explanation(explanation, "gradcam", move_num + 1)
+            explanation = evaluator.explain(board, "lrp")
+            save_explanation(explanation, "lrp", move_num + 1)
+            explanation = evaluator.explain(board, "deeplift")
+            save_explanation(explanation, "deeplift", move_num + 1)
+            explanation = evaluator.explain(board, "saliency_map")
+            save_explanation(explanation, "saliency_map", move_num + 1)
 
         # Volta o tabuleiro para a posição inicial após cada linha de jogadas
         board = chess.Board(fen)
+    print(best_lines)
 
 # Exemplo de uso
 fen = "r1bqk1nr/pp1pnppp/1bp5/1B6/3PP3/5N2/PP3PPP/RNBQ1RK1 w kq - 0 1"
-analyze_position_with_model(fen, depth=20, method="smoothgrad")
-#analyze_position_with_model(fen, depth=20, method="lime")
-#analyze_position_with_model(fen, depth=20, method="gradcam")
-#analyze_position_with_model(fen, depth=20, method="lrp")
-#analyze_position_with_model(fen, depth=20, method="deeplift")
-#analyze_position_with_model(fen, depth=20, method="saliency_map")
+analyze_position_with_model(fen, time_limit=10.0)
 
 engine.quit()

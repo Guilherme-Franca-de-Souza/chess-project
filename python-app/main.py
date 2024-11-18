@@ -17,7 +17,7 @@ import argparse
 #args = parser.parse_args()
 
 # Define o path da engine
-engine_path = "/usr/games/stockfish"
+engine_path = "/usr/local/bin/sf16/stockfish"
 
 # Conexão com o MySQL via SQLAlchemy
 def create_connection():
@@ -257,7 +257,7 @@ def main(profundidadeEngineComRedesNeurais, profundidadeEngineSemRedesNeurais):
     #Para cada cenário, vamos realizar os pares de partidas entre os jogadores iniciados
     cenarios = session.query(Cenario).all()
     for cenario in cenarios:
-        if (cenario.id < 3):
+        if (cenario.id == 6):
             partidaExistente = session.query(exists().where(
                     and_(
                         Partida.brancas_id == jogadorComRedesNeurais.id,
