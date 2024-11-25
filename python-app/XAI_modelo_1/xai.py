@@ -69,6 +69,26 @@ def save_explanation(explanation, method, move_num):
     elif isinstance(explanation, np.ndarray) and explanation.ndim == 4:  # (1, 13, 8, 8)
         explanation = explanation.squeeze()  # Remove a dimensão de batch (fica (13, 8, 8))
 
+        # Soma dos primeiros 12 canais
+        summed_matrix = np.sum(explanation[:12], axis=0)  # Soma ao longo dos 12 primeiros canais
+        plt.imshow(np.flip(summed_matrix, axis=0), cmap='hot', interpolation='nearest')
+        plt.colorbar()
+        plt.title("Soma das Relevâncias nos 12 Primeiros Canais")
+        summed_output_path = f"{method}/absu_summed_explanation_move_{move_num}.png"
+        plt.savefig(summed_output_path)
+        plt.close()
+        print(f"Soma dos primeiros 12 canais salva em {summed_output_path}")
+
+        # Plotar separadamente o 13º canal (jogadas legais)
+        channel_13 = explanation[12]  # Obtém o 13º canal (dimensão 12)
+        plt.imshow(np.flip(channel_13, axis=0), cmap='hot', interpolation='nearest')
+        plt.colorbar()
+        plt.title("Relevância do 13º Canal (Jogadas Legais)")
+        channel_13_output_path = f"{method}/absu_explanation_move_{move_num}_separated_channel_13.png"
+        plt.savefig(channel_13_output_path)
+        plt.close()
+        print(f"13º canal salvo em {channel_13_output_path}")
+
         # Criar uma imagem para cada canal
         for i in range(explanation.shape[0]):  # Explicação agora tem (13, 8, 8)
             # Inverter o eixo horizontal ou vertical para ajustar à visualização do tabuleiro
@@ -102,12 +122,7 @@ def analyze_position_with_model(fen):
     board = chess.Board(fen)
 
     linha_de_lances = [
-        chess.Move.from_uci('d4d5'),
-        chess.Move.from_uci('c6b5'),
-        chess.Move.from_uci('d5d6'),
-        chess.Move.from_uci('e7c6'),
-        chess.Move.from_uci('e4e5'),
-        chess.Move.from_uci('e8f8'),
+        chess.Move.from_uci('e3e4'),
     ]
 
     for i, lance in enumerate(linha_de_lances):
@@ -117,10 +132,10 @@ def analyze_position_with_model(fen):
         #print(f"Jogada {move}: Avaliação {static_evaluation}")
         #explanation = evaluator.explain(board, "smoothgrad")
         #save_explanation(explanation, "smoothgrad", i + 1)
-        explanation = evaluator.explain(board, "lime")
-        save_explanation(explanation, "lime", i + 1)
-        #explanation = evaluator.explain(board, "lrp")
-        #save_explanation(explanation, "lrp", i + 1)
+        #explanation = evaluator.explain(board, "lime")
+        #save_explanation(explanation, "lime", i + 1)
+        explanation = evaluator.explain(board, "lrp")
+        save_explanation(explanation, "lrp", i + 1)
         #explanation = evaluator.explain(board, "deeplift")
         #save_explanation(explanation, "deeplift", i + 1)
         #explanation = evaluator.explain(board, "saliency_map")
@@ -128,7 +143,7 @@ def analyze_position_with_model(fen):
         
 
 # Exemplo de uso
-fen = "r1bqk1nr/pp1pnppp/1bp5/1B6/3PP3/5N2/PP3PPP/RNBQ1RK1 w kq - 0 1"
+fen = "rbnqk1nr/1ppppbpp/8/1BN3B1/pN6/3RPQ2/1P3KPP/3R4 w kq - 0 1"
 analyze_position_with_model(fen)
 
 engine.quit()

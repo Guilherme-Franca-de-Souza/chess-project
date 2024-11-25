@@ -120,22 +120,172 @@ def gradcam(model, input_tensor, target_layer_name="conv2"):
 
 ### LRP ###
 
-import torch
-import matplotlib.pyplot as plt
-
 def lrp(model, input_tensor):
     # Propagar o gradiente de saída para entrada usando autograd
     input_tensor.requires_grad_(True)
-    
-    output = model(input_tensor)  # Executar o modelo
-    output.backward(torch.ones_like(output))  # Calcular gradiente
 
-    relevance = input_tensor.grad * input_tensor  # Calcular relevância
+    output = model(input_tensor)  # Forward pass
+    relevance = output.clone()  # Inicializar a relevância como a saída
 
-    # Desanexar a relevância do gráfico de gradiente e convertê-la para NumPy
+    #print(f"Initial Output Shape: {output.shape}")
+    #print(f"Initial Relevance Shape: {relevance.shape}")
+
+    # Propagar relevância camada a camada
+    for idx, layer in enumerate(reversed(list(model.children()))):
+        #print(f"Processing Layer: {layer.__class__.__name__}, Current Relevance Shape: {relevance.shape}")
+        
+        if isinstance(layer, torch.nn.Linear):  # Propagação em camadas densas
+            #print(f"Layer {idx}: Linear, Weight Shape: {layer.weight.shape}, Bias Shape: {layer.bias.shape}")
+            #print(f"Relevance Before Linear: {relevance.shape}")
+            
+            # Redistribuir relevância proporcionalmente aos pesos da camada
+            relevance = distribute_relevance_to_previous_layer(layer, relevance)
+            #print(f"Relevance After Linear: {relevance.shape}")
+        
+        elif isinstance(layer, torch.nn.Conv2d):  # Propagação em camadas convolucionais
+            #print(f"Layer {idx}: Conv2D, Weight Shape: {layer.weight.shape}, Bias Shape: {layer.bias.shape}")
+            #print(f"Input Tensor Shape (Conv2D): {input_tensor.shape}")
+            relevance = lrp_conv2d(layer, relevance, input_tensor, eps=1e-6)
+            #print(f"Relevance After Conv2D: {relevance.shape}")
+        
+        elif isinstance(layer, torch.nn.ReLU):  # Propagação em ReLU
+            #print(f"Layer {idx}: ReLU")
+            relevance = F.relu(relevance)  # Garantir que relevância permaneça positiva
+            #print(f"Relevance After ReLU: {relevance.shape}")
+        elif isinstance(layer, torch.nn.Flatten):  # Ajustar formato para camadas convolucionais
+            #print(f"Layer {idx}: Flatten")
+            
+            # Verificar se o número de elementos é compatível
+            expected_size = input_tensor.size(0) * 128 * 8 * 8  # Total de elementos esperado
+            actual_size = relevance.numel()  # Total de elementos atual no tensor de relevância
+
+            if actual_size != expected_size:
+                #print(f"Current Relevance Shape: {relevance.shape}, Total Elements: {actual_size}")
+                
+                # Expandir ou redistribuir relevância para atingir o número correto de elementos
+                relevance = relevance.expand(-1, expected_size // actual_size).contiguous().view(
+                    input_tensor.size(0), 128, 8, 8
+                )
+            else:
+                # Redimensionar para o formato correto se os tamanhos forem compatíveis
+                relevance = relevance.view(input_tensor.size(0), 128, 8, 8)
+            
+            #print(f"Relevance After Flatten: {relevance.shape}")
+
+
+    # Converter relevância para NumPy e desanexar do gráfico computacional
     relevance = relevance.detach().cpu().numpy()
+    #print("Final Relevance Shape:", relevance.shape)
+    return relevance
+
+def distribute_relevance_to_previous_layer(layer, relevance):
+    """
+    Redistribui a relevância da camada superior para as entradas da camada anterior.
+    """
+    #print(f"Distributing Relevance: Current Relevance Shape {relevance.shape}")
+    weights = layer.weight.data
+    #print(f"Layer Weights Shape: {weights.shape}")
+
+    # Expandir relevância proporcionalmente aos pesos
+    relevance = torch.matmul(relevance, weights.abs())  # Propagar proporcionalmente aos pesos
+    #print(f"Distributed Relevance Shape: {relevance.shape}")
 
     return relevance
+
+
+def lrp_linear(layer, relevance_output, eps=1e-6):
+    """
+    Propaga a relevância em camadas lineares.
+    """
+    #print(f"Entering lrp_linear with Relevance Shape: {relevance_output.shape}")
+    
+    weights = layer.weight.data
+    biases = layer.bias.data if layer.bias is not None else 0
+
+    #print(f"Linear Layer Weights Shape: {weights.shape}, Bias Shape: {biases.shape if biases is not None else 'None'}")
+    #print(f"Relevance Output Shape: {relevance_output.shape}")
+
+    # Calcular a relevância proporcional
+    z = torch.matmul(relevance_output, weights.T) + biases + eps
+    relevance_input = torch.matmul((relevance_output / z), weights)
+    #print(f"Relevance Input Shape After Linear: {relevance_input.shape}")
+    return relevance_input
+
+def lrp_conv2d(layer, relevance_output, input_tensor, eps=1e-6):
+    """
+    Propaga a relevância em camadas convolucionais.
+    """
+    #print(f"Entering lrp_conv2d with Relevance Shape: {relevance_output.shape}")
+    #print(f"Conv2D Layer Weight Shape: {layer.weight.shape}, Bias Shape: {layer.bias.shape if layer.bias is not None else 'None'}")
+    #print(f"Input Tensor Shape: {input_tensor.shape}")
+
+    weights = layer.weight.data
+    bias = layer.bias.data if layer.bias is not None else 0
+
+    # Ajustar canais de relevância para corresponder ao número de canais internos
+    if relevance_output.shape[1] != weights.shape[1]:  # Se os canais não coincidirem
+        #print("Adjusting relevance channels to match input channels...")
+        weight_mapping = weights.sum(dim=(2, 3)).abs()  # Soma sobre kernel (reduzir para [128, 64])
+        relevance_output = torch.einsum('bchw,oi->bohw', relevance_output, weight_mapping.T)
+        #print(f"Adjusted Relevance Shape (Internal Mapping): {relevance_output.shape}")
+
+    # Mapear relevância para o número de canais da entrada original
+    if relevance_output.shape[1] != input_tensor.shape[1]:  # Ajustar para 13 canais
+        #print("Mapping relevance channels to match original input channels...")
+        relevance_output = relevance_output[:, :input_tensor.shape[1], :, :]  # Ajuste direto para 13 canais
+        #print(f"Adjusted Relevance Shape (Input Mapping): {relevance_output.shape}")
+
+    # Reajustar relevância para corresponder aos pesos (64 canais)
+    if relevance_output.shape[1] != weights.shape[1]:
+        #print("Re-adjusting relevance to match convolution weights...")
+        relevance_output = torch.cat([
+            relevance_output,
+            torch.zeros((relevance_output.size(0), weights.shape[1] - relevance_output.shape[1], *relevance_output.shape[2:]), device=relevance_output.device)
+        ], dim=1)
+        #print(f"Relevance Shape After Re-adjustment: {relevance_output.shape}")
+
+    # Ajustar o input_tensor para corresponder aos pesos (64 canais)
+    if input_tensor.shape[1] != weights.shape[1]:  # Se o input_tensor não tem 64 canais
+        #print("Adjusting input_tensor channels to match convolution weights...")
+        input_tensor = torch.cat([
+            input_tensor,
+            torch.zeros((input_tensor.size(0), weights.shape[1] - input_tensor.shape[1], *input_tensor.shape[2:]), device=input_tensor.device)
+        ], dim=1)
+        #print(f"Input Tensor Shape After Adjustment: {input_tensor.shape}")
+
+    try:
+        # Propagação inversa da relevância
+        z = F.conv2d(input_tensor, weights, bias=bias, stride=layer.stride, padding=layer.padding) + eps
+    except RuntimeError as e:
+        #print(f"Error in lrp_conv2d forward convolution: {e}")
+        #print(f"Input Tensor Shape: {input_tensor.shape}")
+        #print(f"Weight Shape: {weights.shape}")
+        raise
+
+    # Ajustar relevância para corresponder aos canais de saída da convolução transposta
+    if relevance_output.shape[1] != weights.shape[0]:  # Se não tem 128 canais
+        #print("Adjusting relevance for transpose convolution...")
+        relevance_output = torch.cat([
+            relevance_output,
+            torch.zeros((relevance_output.size(0), weights.shape[0] - relevance_output.shape[1], *relevance_output.shape[2:]), device=relevance_output.device)
+        ], dim=1)
+        #print(f"Relevance Shape After Adjustment for Transpose: {relevance_output.shape}")
+
+    try:
+        # Redistribuir relevância proporcional
+        relevance_input = F.conv_transpose2d(
+            (relevance_output / z), weights, stride=layer.stride, padding=layer.padding
+        )
+    except RuntimeError as e:
+        #print(f"Error in lrp_conv2d transpose convolution: {e}")
+        #print(f"Relevance Output Shape: {relevance_output.shape}")
+        #print(f"Weight Shape: {weights.shape}")
+        raise
+
+    #print(f"Relevance Input Shape After Conv2D: {relevance_input.shape}")
+    return relevance_input * input_tensor
+
+
 
 ### LRP ###
 
